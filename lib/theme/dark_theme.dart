@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 ThemeData dark = ThemeData(
     useMaterial3: false,
-    fontFamily: 'Ubuntu',
+    fontFamily: GoogleFonts.notoSans().fontFamily,
     colorScheme: const ColorScheme(
       brightness: Brightness.dark,
       // 4 màu chủ đạo
-      primary: Color(0xFF282a36),
-      onPrimary: Color(0xFFEE4266),
+      primary: Color.fromARGB(255, 0, 0, 0),
+      onPrimary: Color.fromARGB(255, 221, 17, 17),
       primaryContainer: Color(0xFF6196A6),
       onPrimaryContainer: Color(0xFF1B4242),
       secondary: Color(0xFFE493B3),
@@ -37,7 +38,7 @@ ThemeData dark = ThemeData(
       shadow: Color(0xFF000000),
       scrim: Color(0xFF000000),
       inverseSurface: Color(0xFFE6E1E5),
-      onInverseSurface: Color(0xFF313033),
+      onInverseSurface: Color.fromARGB(255, 29, 29, 29),
       inversePrimary: Color(0xFF6750A4),
       // The surfaceTint color is set to the same color as the primary.
       surfaceTint: Color(0xFFD0BCFF),

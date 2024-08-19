@@ -53,9 +53,9 @@ class ItemMovieInformation extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
                     decoration: BoxDecoration(
-                        color: Colors.grey,
+                        color: theme.onInverseSurface,
                         borderRadius: BorderRadius.circular(8)),
                     child: Text(year)),
               ],

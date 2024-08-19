@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:app/component/loading_widget.dart';
 import 'package:app/config/app_size.dart';
 import 'package:app/feature/home/cubit/home_page_cubit.dart';
 import 'package:app/feature/home/cubit/home_page_state.dart';
@@ -178,11 +177,11 @@ class _HomePageState extends State<HomePage> {
                                           options: CarouselOptions(
                                             autoPlay: true,
                                             enlargeCenterPage: true,
-                                            viewportFraction: 0.75,
+                                            viewportFraction: 0.3,
                                             onPageChanged: (index, reason) {
                                               homePageCubit.setPageIndex(index);
                                             },
-                                            // aspectRatio: 2.0,
+                                            aspectRatio: 16 / 9,
                                           ),
                                         ),
                                       ),
@@ -203,8 +202,8 @@ class _HomePageState extends State<HomePage> {
                                                         .currentIndexPage), // PageController
                                                 count: state.movies.length,
                                                 effect: WormEffect(
-                                                    dotWidth: 10,
-                                                    dotHeight: 10,
+                                                    dotWidth: 6,
+                                                    dotHeight: 6,
                                                     activeDotColor: theme
                                                         .colorScheme
                                                         .onPrimary), // your preferred effect
@@ -283,9 +282,9 @@ Widget _bodyShimmer(BuildContext context) {
             options: CarouselOptions(
               autoPlay: true,
               enlargeCenterPage: true,
-              viewportFraction: 0.75,
+              viewportFraction: 0.3,
               onPageChanged: (index, reason) {},
-              // aspectRatio: 2.0,
+              aspectRatio: 16/9,
             ),
           ),
         ),

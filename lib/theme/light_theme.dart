@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 ThemeData light = ThemeData(
-    useMaterial3: false,
-    fontFamily: 'Ubuntu',
+    useMaterial3: true,
+    fontFamily: GoogleFonts.notoSans().fontFamily,
     colorScheme: const ColorScheme(
       brightness: Brightness.light,
       // 4 màu chủ đạo tạo điểm nhấn
