@@ -13,12 +13,63 @@ import '../../l10n/cubit/locale_cubit.dart';
 import 'cubit/movie_cubit.dart';
 import 'cubit/movie_state.dart';
 
-class MovieList extends StatelessWidget {
-  const MovieList({super.key, this.title = '', this.itemFilms = const [], required this.slug});
+class MovieList extends StatefulWidget {
   final String title;
   final String slug;
   final List<MovieInformation> itemFilms;
 
+  const MovieList({
+    super.key,
+    required this.title,
+    required this.slug,
+    required this.itemFilms,
+  });
+
+  @override
+  _MovieListWidgetState createState() => _MovieListWidgetState();
+}
+
+class _MovieListWidgetState extends State<MovieList> {
+  late ScrollController controller;
+  var page = 1;
+  var isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = ScrollController()..addListener(_scrollListener);
+  }
+
+  @override
+  void dispose() {
+    controller.removeListener(_scrollListener);
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    var movieCubit = context.read<MovieCubit>();
+    var localeCubit = context.read<LocaleCubit>();
+
+    if (controller.position.extentAfter < context.size!.height) {
+      if (isLoading == true) {
+        return;
+      }
+      switch (widget.slug) {
+        case 'phim-le':
+          movieCubit.getAListOfIndividualMovies(++page);
+          break;
+        case 'hoat-hinh':
+          movieCubit.getTheListOfCartoons(++page);
+          break;
+        case 'phim-bo':
+          movieCubit.getTheListOfMoviesAndSeries(++page);
+          break;
+        default:
+          break;
+      }
+      isLoading = true;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,11 +77,8 @@ class MovieList extends StatelessWidget {
     final double height = MediaQuery.of(context).size.height;
     final app = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    var movieCubit = context.read<MovieCubit>();
-    var localeCubit = context.read<LocaleCubit>();
-    var page = 1;
 
-    var listFilm = itemFilms;
+    var listFilm = widget.itemFilms;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.primary,
@@ -40,7 +88,7 @@ class MovieList extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
             },
-            title: title,
+            title: widget.title,
           ),
           listFilm.isEmpty
               ? Container(
@@ -51,63 +99,39 @@ class MovieList extends StatelessWidget {
                 )
               : Expanded(
                   child: BlocBuilder<MovieCubit, MovieState>(
-                    builder: (context, state) {
-                      return ListView.separated(
-                          physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 20),
-                          itemBuilder: (context, index) {
-                            print(index);
-                            print("listFilm.length::::; ${listFilm.length}");
-                            if (index >= listFilm.length - 1) {
-                              // getMoreData();
-                              switch (slug) {
-                                case 'phim-le':
-                                  movieCubit.getAListOfIndividualMovies(++page);
-                                  break;
-                                case 'hoat-hinh':
-                                  movieCubit.getTheListOfCartoons(++page);
-                                  break;
-                                case 'phim-bo':
-                                  movieCubit.getTheListOfMoviesAndSeries(++page);
-                                  break;
-                                default:
-                                  break;
-                              }
-                              movieCubit.getMovieDetails(slug, localeCubit.state.languageCode);
-                              return const LoadingWidget();
-                            }
-                            if (state.seriesMovies.length > KeyApp.MAX_SIZE) {
-                              listFilm = state.seriesMovies;
-                            }
-                            if (state.singleMovies.length > KeyApp.MAX_SIZE) {
-                              listFilm = state.singleMovies;
-                            }
-                            if (state.cartoon.length > KeyApp.MAX_SIZE) {
-                              listFilm = state.cartoon;
-                            }
+                      builder: (context, state) {
+                        isLoading = false;
+                    return ListView.separated(
+                        controller: controller,
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 20),
+                        itemBuilder: (context, index) {
+                          if (index >= listFilm.length - 1) {
+                            // getMoreData();
+                            return const LoadingWidget();
+                          }
 
-                            return GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => WatchAMovie(
-                                              movieInformation: listFilm[index])));
-                                },
-                                child: ItemMovieInformation(
-                                  imageUrl: listFilm[index].thumb_url,
-                                  name: listFilm[index].name,
-                                  year: listFilm[index].year.toString(),
-                                ));
-                          },
-                          separatorBuilder: (context, index) => const SizedBox(
-                            height: AppSize.size16,
-                          ),
-                          itemCount: listFilm.length);
-
-                    }
-                  ),
+                          return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => WatchAMovie(
+                                            movieInformation:
+                                                listFilm[index])));
+                              },
+                              child: ItemMovieInformation(
+                                imageUrl: listFilm[index].thumb_url,
+                                name: listFilm[index].name,
+                                year: listFilm[index].year.toString(),
+                              ));
+                        },
+                        separatorBuilder: (context, index) => const SizedBox(
+                              height: AppSize.size16,
+                            ),
+                        itemCount: listFilm.length);
+                  }),
                 )
         ],
       ),
