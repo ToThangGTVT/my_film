@@ -18,5 +18,7 @@ class KeyApp {
   static const String VIEW_HISTORY_BOX = 'view_history';
   static const String IS_SELECTED_NOTIFICATION = 'is_selected_notification';
 
+  static const int MAX_SIZE = 50;
+
 
 }

@@ -103,6 +103,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
           ),
         ),
         Container(
+          color: theme.colorScheme.primary,
           padding: const EdgeInsets.only(left: 10, right: 10, top: 20),
           height: height - (height * 0.3 + 32),
           child: SingleChildScrollView(

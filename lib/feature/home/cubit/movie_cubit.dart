@@ -12,14 +12,17 @@ import 'package:translator/translator.dart';
 
 class MovieCubit extends Cubit<MovieState> {
   MovieCubit() : super(const MovieState());
+  List<MovieInformation> newMovies = [];
+  List<MovieInformation> newSingleMovie = [];
+  List<MovieInformation> newSeriesMovies = [];
+  List<MovieInformation> newCartoons = [];
 
   final translator = GoogleTranslator();
 
-  Future<void> getMovie() async {
+  Future<void> getMovie(int page) async {
     emit(state.copyWith(status: MovieStatus.loading));
-    List<MovieInformation> newMovies = [];
 
-    final data = await FetchApiMovie.getMovies();
+    final data = await FetchApiMovie.getMovies(page);
 
     List items = data['items'];
     for (var i = 0; i < items.length; i++) {
@@ -86,9 +89,8 @@ class MovieCubit extends Cubit<MovieState> {
     return newContent;
   }
 
-  Future<void> getAListOfIndividualMovies() async {
+  Future<void> getAListOfIndividualMovies(int page) async {
     emit(state.copyWith(status: MovieStatus.loading));
-    List<MovieInformation> newSingleMovie = [];
 
     final data = await FetchApiMovie.getAListOfIndividualMovies();
 
@@ -116,9 +118,8 @@ class MovieCubit extends Cubit<MovieState> {
     ));
   }
 
-  Future<void> getTheListOfMoviesAndSeries() async {
+  Future<void> getTheListOfMoviesAndSeries(int page) async {
     emit(state.copyWith(status: MovieStatus.loading));
-    List<MovieInformation> newSeriesMovies = [];
 
     final data = await FetchApiMovie.getTheListOfMoviesAndSeries();
 
@@ -145,9 +146,8 @@ class MovieCubit extends Cubit<MovieState> {
     ));
   }
 
-  Future<void> getTheListOfCartoons() async {
+  Future<void> getTheListOfCartoons(int page) async {
     emit(state.copyWith(status: MovieStatus.loading));
-    List<MovieInformation> newCartoons = [];
 
     final data = await FetchApiMovie.getTheListOfCartoons();
     List items = data['data']['items'];

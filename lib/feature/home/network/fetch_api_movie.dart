@@ -1,17 +1,23 @@
 import 'dart:convert';
 import 'package:app/config/key_app.dart';
 import 'package:app/config/print_color.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class FetchApiMovie {
   FetchApiMovie._();
 
-  static Future<Map<String, dynamic>> getMovies() async {
+  static Future<Map<String, dynamic>> getMovies(int page) async {
+    if (page < 1) {
+      page = 1;
+    }
     var uri =
-        Uri.https(KeyApp.Base_URL, KeyApp.NEW_UPDATE_MOVIES, {'page': '1'});
+        Uri.https(KeyApp.Base_URL, KeyApp.NEW_UPDATE_MOVIES, {'page': '$page'});
+    _logUri(uri);
     Map<String, dynamic> result = {};
     try {
       final response = await http.get(uri);
+      _logResponse(response);
 
       switch (response.statusCode) {
         case 200:
@@ -47,9 +53,11 @@ class FetchApiMovie {
       KeyApp.Base_URL,
       '/phim/$slug',
     );
+    _logUri(uri);
     Map<String, dynamic> result = {};
     try {
       final response = await http.get(uri);
+      _logResponse(response);
 
       switch (response.statusCode) {
         case 200:
@@ -80,10 +88,12 @@ class FetchApiMovie {
   }
 
   static Future<Map<String, dynamic>> getAListOfIndividualMovies() async {
-    var uri = Uri.https(KeyApp.Base_URL, KeyApp.SINGLE_MOVIES, {'limit': '50'});
+    var uri = Uri.https(KeyApp.Base_URL, KeyApp.SINGLE_MOVIES, {'limit': '${KeyApp.MAX_SIZE}'});
+    _logUri(uri);
     Map<String, dynamic> result = {};
     try {
       final response = await http.get(uri);
+      _logResponse(response);
 
       switch (response.statusCode) {
         case 200:
@@ -115,10 +125,12 @@ class FetchApiMovie {
   }
 
   static Future<Map<String, dynamic>> getTheListOfMoviesAndSeries() async {
-    var uri = Uri.https(KeyApp.Base_URL, KeyApp.SERIES_MOVIES, {'limit': '50'});
+    var uri = Uri.https(KeyApp.Base_URL, KeyApp.SERIES_MOVIES, {'limit': '${KeyApp.MAX_SIZE}'});
+    _logUri(uri);
     Map<String, dynamic> result = {};
     try {
       final response = await http.get(uri);
+      _logResponse(response);
 
       switch (response.statusCode) {
         case 200:
@@ -150,10 +162,12 @@ class FetchApiMovie {
   }
 
   static Future<Map<String, dynamic>> getTheListOfCartoons() async {
-    var uri = Uri.https(KeyApp.Base_URL, KeyApp.CARTOON, {'limit': '50'});
+    var uri = Uri.https(KeyApp.Base_URL, KeyApp.CARTOON, {'limit': '${KeyApp.MAX_SIZE}'});
+    _logUri(uri);
     Map<String, dynamic> result = {};
     try {
       final response = await http.get(uri);
+      _logResponse(response);
 
       switch (response.statusCode) {
         case 200:
@@ -187,9 +201,11 @@ class FetchApiMovie {
   static Future<Map<String, dynamic>> movieSearch(String keyWord) async {
     var uri = Uri.https(KeyApp.Base_URL, KeyApp.MOVIES_SEARCH,
         {'keyword': keyWord, 'limit': '10'});
+    _logUri(uri);
     Map<String, dynamic> result = {};
     try {
       final response = await http.get(uri);
+      _logResponse(response);
 
       switch (response.statusCode) {
         case 200:
@@ -218,5 +234,19 @@ class FetchApiMovie {
       printRed(e.toString());
     }
     return result;
+  }
+
+  static Uri _logUri(Uri uri) {
+    if (kDebugMode) {
+      print('Fetching movies from: $uri');
+    }
+    return uri;
+  }
+
+  static void _logResponse(http.Response response) {
+    if (kDebugMode) {
+      print('API response status code: ${response.statusCode}');
+      print('API response data: ${response.body}');
+    }
   }
 }

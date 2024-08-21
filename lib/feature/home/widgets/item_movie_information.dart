@@ -21,7 +21,7 @@ class ItemMovieInformation extends StatelessWidget {
     return Row(
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(4),
           child: SizedBox(
             width: width * 0.4,
             height: 100,
@@ -41,7 +41,7 @@ class ItemMovieInformation extends StatelessWidget {
         ),
         SizedBox(
           height: 80,
-          width: width * 0.6 - 20,
+          width: width * 0.6 - 32,
           child: Padding(
             padding: const EdgeInsets.all(10.0),
             child: Column(

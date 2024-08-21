@@ -17,9 +17,11 @@ class ItemGridAndTitle extends StatefulWidget {
     super.key,
     required this.itemFilms,
     required this.title,
+    required this.slug,
   });
   List<MovieInformation> itemFilms;
   final String title;
+  final String slug;
 
   @override
   State<ItemGridAndTitle> createState() => _ItemGridAndTitleState();
@@ -39,7 +41,7 @@ class _ItemGridAndTitleState extends State<ItemGridAndTitle> {
       child: widget.itemFilms.isEmpty
           ? const SizedBox()
           : Padding(
-              padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 10),
               child: Column(
                 children: [
                   GestureDetector(
@@ -50,10 +52,10 @@ class _ItemGridAndTitleState extends State<ItemGridAndTitle> {
                               builder: (context) => MovieList(
                                     itemFilms: widget.itemFilms,
                                     title: widget.title,
+                                    slug: widget.slug,
                                   )));
                     },
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           widget.title,
@@ -61,10 +63,9 @@ class _ItemGridAndTitleState extends State<ItemGridAndTitle> {
                               fontSize: AppSize.size20,
                               fontWeight: FontWeight.w600),
                         ),
-                        SvgPicture.asset(
-                          'assets/icons/chevron-right.svg',
-                          color: theme.colorScheme.tertiary,
-                        )
+                        const Spacer(),
+                        const Text("See more"),
+                        const Icon(Icons.arrow_forward_ios_outlined)
                       ],
                     ),
                   ),
@@ -96,7 +97,7 @@ class _ItemGridAndTitleState extends State<ItemGridAndTitle> {
                           children: [
                             Expanded(
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(4),
                                 child: CachedNetworkImage(
                                   imageUrl: widget.itemFilms[index].poster_url,
                                   imageBuilder: (context, imageProvider) =>
@@ -157,8 +158,8 @@ class _ItemGridAndTitleState extends State<ItemGridAndTitle> {
                       height: 30,
                       width: MediaQuery.of(context).size.width * 0.8,
                       decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(8)),
+                          color: theme.colorScheme.onPrimary,
+                          borderRadius: BorderRadius.circular(4)),
                       child: Text(isDetail ? app!.hideLess : app!.seeMore),
                     ),
                   )
