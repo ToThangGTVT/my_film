@@ -8,9 +8,10 @@ enum MovieDownloadStatus { init, loading, success, error }
 @CopyWith()
 class MovieDownloadState extends Equatable {
 
-  const MovieDownloadState(this.progress);
+  const MovieDownloadState({this.progress = 0, this.status = MovieDownloadStatus.init});
 
   final int progress ;
+  final MovieDownloadStatus status ;
 
   @override
   // TODO: implement props

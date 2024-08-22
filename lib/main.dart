@@ -1,3 +1,4 @@
+import 'package:app/feature/home/cubit/movie_download/movie_download_cubit.dart';
 import 'package:app/feature/splash/splash_screen.dart';
 import 'package:app/l10n/cubit/locale_cubit.dart';
 import 'package:app/local_storage/local_storage.dart';
@@ -42,6 +43,9 @@ void main() async {
         ),
         BlocProvider(
           create: (context) => MovieCubit(),
+        ),
+        BlocProvider(
+          create: (context) => MovieDownloadCubit(),
         ),
       ],
       child: const MyApp(),

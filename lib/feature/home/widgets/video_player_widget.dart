@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:app/component/loading_widget.dart';
 import 'package:app/config/app_size.dart';
 import 'package:app/config/print_color.dart';
+import 'package:app/feature/home/cubit/movie_download/movie_download_cubit.dart';
 import 'package:app/feature/home/models/data_film.dart';
 import 'package:app/feature/home/models/movie_category.dart';
 import 'package:app/feature/home/models/movie_episodes.dart';
@@ -77,95 +78,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       ),
     );
 
-    initAsync();
-  }
-
-  void initAsync() async {
-    String saveDir = await _findSavePath();
-    M3u8Downloader.initialize(
-        onSelect: () async {
-          print('下载成功点击');
-          return null;
-        }
-    );
-    M3u8Downloader.config(
-        saveDir: saveDir,
-        threadCount: 2,
-        convertMp4: false,
-        debugMode: false
-    );
-    // 注册监听器
-    IsolateNameServer.registerPortWithName(_port.sendPort, 'downloader_send_port');
-    _port.listen((dynamic data) {
-      // 监听数据请求
-      print(data);
-    });
-  }
-
-  Future<String> _findSavePath() async {
-    late String saveDir;
-
-    if (Platform.isAndroid) {
-      // Get the Downloads directory on Android
-      Directory? directory = Directory('/storage/emulated/0/Download');
-      saveDir = directory.path;
-    } else {
-      // For other platforms, use the application documents directory
-      final directory = await getApplicationDocumentsDirectory();
-      saveDir = path.join(directory.path, 'vPlayDownload');
-    }
-
-    Directory root = Directory(saveDir);
-    if (!root.existsSync()) {
-      await root.create(recursive: true);
-    }
-
-    print(saveDir);
-    return saveDir;
-  }
-
-  @pragma('vm:entry-point')
-  static progressCallback(dynamic args) {
-    final SendPort? send = IsolateNameServer.lookupPortByName('downloader_send_port');
-    if (send != null) {
-      args["status"] = 1;
-      send.send(args);
-    }
-  }
-  @pragma('vm:entry-point')
-  static successCallback(dynamic args) {
-    final SendPort? send = IsolateNameServer.lookupPortByName('downloader_send_port');
-    if (send != null) {
-      send.send({
-        "status": 2,
-        "url": args["url"],
-        "filePath": args["filePath"],
-        "dir": args["dir"]
-      });
-
-      Fluttertoast.showToast(
-          msg: "Download Success!!!",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.CENTER,
-          timeInSecForIosWeb: 1,
-          fontSize: 16.0
-      );
-    }
-  }
-  @pragma('vm:entry-point')
-  static errorCallback(dynamic args) {
-    final SendPort? send = IsolateNameServer.lookupPortByName('downloader_send_port');
-    if (send != null) {
-      send.send({"status": 3, "url": args["url"]});
-    }
-
-    Fluttertoast.showToast(
-        msg: "Download ERROR!!!",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-        timeInSecForIosWeb: 1,
-        fontSize: 16.0
-    );
+    MovieDownloadCubit.initAsync();
   }
 
   Future<bool> _checkPermission() async {
@@ -188,6 +101,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     final double height = MediaQuery.of(context).size.height;
     final theme = Theme.of(context);
     final MovieCubit movieCubit = context.read<MovieCubit>();
+    final MovieDownloadCubit movieDownloadCubit = context.watch<MovieDownloadCubit>();
     final app = AppLocalizations.of(context);
 
     return Column(
@@ -242,11 +156,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                           await M3u8Downloader.config(
                             convertMp4: true,
                           );
-                          M3u8Downloader.download(url: widget.url,
-                              name: widget.dataFilm?.movie.name ?? "video-${DateTime.now().millisecondsSinceEpoch}",
-                              progressCallback: progressCallback,
-                              successCallback: successCallback,
-                              errorCallback: errorCallback);
+
+                          movieDownloadCubit.download(widget.url, widget.dataFilm?.movie.origin_name);
                         }
                         });
                       },
