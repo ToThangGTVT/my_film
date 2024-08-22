@@ -10,7 +10,7 @@ class MovieDownloadState extends Equatable {
 
   const MovieDownloadState({this.progress = 0, this.status = MovieDownloadStatus.init});
 
-  final int progress ;
+  final double progress ;
   final MovieDownloadStatus status ;
 
   @override

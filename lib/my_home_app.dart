@@ -46,15 +46,9 @@ class _MyHomeAppState extends State<MyHomeApp> {
           },
           items: [
             BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                'assets/icons/home.svg',
-                color: theme.colorScheme.tertiary,
-              ),
+              icon: Icon(Icons.home_outlined, color: theme.colorScheme.tertiary),
               label: app?.home,
-              activeIcon: SvgPicture.asset(
-                'assets/icons/home.svg',
-                color: theme.colorScheme.onPrimary,
-              ),
+              activeIcon: Icon(Icons.home_outlined, color: theme.colorScheme.onPrimary),
             ),
             // BottomNavigationBarItem(
             //   icon: SvgPicture.asset(
@@ -68,26 +62,14 @@ class _MyHomeAppState extends State<MyHomeApp> {
             //   ),
             // ),
             BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                'assets/icons/heart.svg',
-                color: theme.colorScheme.tertiary,
-              ),
+              icon: Icon(Icons.favorite_border, color: theme.colorScheme.tertiary),
               label: app?.favorite,
-              activeIcon: SvgPicture.asset(
-                'assets/icons/heart.svg',
-                color: theme.colorScheme.onPrimary,
-              ),
+              activeIcon: Icon(Icons.favorite_border, color: theme.colorScheme.onPrimary),
             ),
             BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                'assets/icons/setting.svg',
-                color: theme.colorScheme.tertiary,
-              ),
+              icon: Icon(Icons.settings_outlined, color: theme.colorScheme.tertiary),
               label: app?.setting,
-              activeIcon: SvgPicture.asset(
-                'assets/icons/setting.svg',
-                color: theme.colorScheme.onPrimary,
-              ),
+              activeIcon: Icon(Icons.settings_outlined, color: theme.colorScheme.tertiary),
             ),
           ],
         ),

@@ -45,7 +45,7 @@ class MovieDownloadCubit extends Cubit<MovieDownloadState> {
         _port.sendPort, 'downloader_send_port');
     _port.listen((dynamic data) {
       emit(state.copyWith(
-        progress: int.tryParse(data['progress'])
+        progress: data['progress']
       ));
     });
   }

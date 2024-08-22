@@ -385,7 +385,7 @@ AppBar _appBar(BuildContext context, ScrollController scrollController) {
                     width: 1,
                     color: theme.colorScheme.outline,
                     style: BorderStyle.solid),
-                borderRadius: BorderRadius.circular(4)),
+                borderRadius: BorderRadius.circular(0)),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

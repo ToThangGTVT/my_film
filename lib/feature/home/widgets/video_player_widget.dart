@@ -24,6 +24,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 
+import '../../../component/loading_circle.dart';
 import '../cubit/movie/movie_cubit.dart';
 // ignore: must_be_immutable
 class VideoPlayerWidget extends StatefulWidget {
@@ -49,6 +50,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   String summaryContent = '';
   final ReceivePort _port = ReceivePort();
   late final MovieDownloadCubit movieDownloadCubit;
+  var isInit = false;
 
   void splitContent() {
     // làm chức năng chia nhỏ content để hiện 1 phần
@@ -79,9 +81,6 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         Uri.parse(widget.url),
       ),
     );
-
-    movieDownloadCubit = context.watch<MovieDownloadCubit>();
-    movieDownloadCubit.initAsync();
   }
 
   Future<bool> _checkPermission() async {
@@ -104,9 +103,12 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     final double height = MediaQuery.of(context).size.height;
     final theme = Theme.of(context);
     final MovieCubit movieCubit = context.read<MovieCubit>();
-    final MovieDownloadCubit movieDownloadCubit = context.watch<MovieDownloadCubit>();
+    MovieDownloadCubit movieDownloadCubit = context.watch<MovieDownloadCubit>();
     final app = AppLocalizations.of(context);
-
+    if (isInit == false) {
+      movieDownloadCubit.initAsync();
+    }
+    isInit = true;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -152,31 +154,40 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    GestureDetector(
-                      onTap: () {
-                        _checkPermission().then((hasGranted) async {
-                        if (hasGranted) {
-                          await M3u8Downloader.config(
-                            convertMp4: true,
-                          );
-
-                          movieDownloadCubit.download(widget.url, widget.dataFilm?.movie.origin_name);
-                        }
-                        });
-                      },
-                      child: Icon(
-                        Icons.arrow_circle_down_rounded,
-                        size: AppSize.size28,
-                        color: widget.movieInformation!.isFavorite
-                            ? theme.colorScheme.onPrimary
-                            : theme.colorScheme.tertiary,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    BlocBuilder<MovieDownloadCubit, MovieDownloadState>(
-                      builder: (context, state) {
-                      return Text(state.progress.toString());
-                    },)
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        BlocBuilder<MovieDownloadCubit, MovieDownloadState>(
+                          builder: (context, state) {
+                            return Padding(padding: const EdgeInsets.all(2), child: SizedBox.square(
+                              dimension: 40,
+                              child: CircularProgressIndicator(
+                                value: state.progress,
+                                color: theme.colorScheme.tertiary,
+                                strokeWidth: 2.0,
+                              ),
+                            ),);
+                          },),
+                        GestureDetector(
+                          onTap: () {
+                            _checkPermission().then((hasGranted) async {
+                              if (hasGranted) {
+                                await M3u8Downloader.config(
+                                  convertMp4: true,
+                                );
+                                movieDownloadCubit.download(widget.url, widget.dataFilm?.movie.origin_name);
+                              }
+                            });
+                          },
+                          child: Icon(
+                            Icons.arrow_downward_rounded,
+                            size: AppSize.size22,
+                            color: widget.movieInformation!.isFavorite
+                                ? theme.colorScheme.onPrimary
+                                : theme.colorScheme.tertiary,
+                          ),
+                        )]
+                    )
                   ],
                 ),
                 SizedBox(
@@ -227,11 +238,11 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                               height: 20,
                               decoration: BoxDecoration(
                                   color: Colors.grey,
-                                  borderRadius: BorderRadius.circular(8)),
+                                  borderRadius: BorderRadius.circular(0)),
                               child: Text(
                                 isHidden ? app!.seeMore : app!.hideLess,
                                 style: TextStyle(
-                                    color: theme.colorScheme.onPrimary,
+                                    color: theme.colorScheme.primary,
                                     fontSize: AppSize.size11),
                               ),
                             ),
@@ -270,26 +281,23 @@ class VideoPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: height * 0.3,
-      child: FlickVideoPlayer(
-        wakelockEnabled: true,
-        flickManager: flickManager,
-        flickVideoWithControls: FlickVideoWithControls(
-          aspectRatioWhenLoading: 16 / 9,
-          videoFit: BoxFit.fitWidth,
-          controls: FlickPortraitControls(
-            iconSize: 30,
-            progressBarSettings: FlickProgressBarSettings(
-              bufferedColor: Colors.white.withOpacity(0.5),
-              playedColor: Colors.red,
-              height: 4,
-              handleRadius: 9,
-              handleColor: Colors.red,
-            ),
+    return FlickVideoPlayer(
+      wakelockEnabled: true,
+      flickManager: flickManager,
+      flickVideoWithControls: FlickVideoWithControls(
+        aspectRatioWhenLoading: 16 / 9,
+        videoFit: BoxFit.fitWidth,
+        controls: FlickPortraitControls(
+          iconSize: 30,
+          progressBarSettings: FlickProgressBarSettings(
+            bufferedColor: Colors.white.withOpacity(0.5),
+            playedColor: Colors.red,
+            height: 4,
+            handleRadius: 9,
+            handleColor: Colors.red,
           ),
-          playerLoadingFallback: const LoadingWidget(),
         ),
+        playerLoadingFallback: const LoadingWidget(),
       ),
     );
   }

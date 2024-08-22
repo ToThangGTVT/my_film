@@ -163,7 +163,7 @@ class _ItemGridAndTitleState extends State<ItemGridAndTitle> {
                       width: MediaQuery.of(context).size.width * 0.8,
                       decoration: BoxDecoration(
                           color: theme.colorScheme.onPrimary,
-                          borderRadius: BorderRadius.circular(4)),
+                          borderRadius: BorderRadius.circular(0)),
                       child: Text(isDetail ? app!.hideLess : app!.seeMore),
                     ),
                   )

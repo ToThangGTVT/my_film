@@ -57,59 +57,60 @@ class _WatchAMovieState extends State<WatchAMovie> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<MovieCubit, MovieState>(
-      builder: (context, state) {
-        // ignore: deprecated_member_use
-        return Scaffold(
-          body: isLoading
-              ? const Center(
-                  child: LoadingWidget(),
-                )
-              : context.watch<MovieCubit>().state.dataFilm == null
-                  ? Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Center(
-                          child:
-                              Text(AppLocalizations.of(context)!.movieUpdate),
-                        ),
-                        const SizedBox(
-                          height: 20,
-                        ),
-                        SizedBox(
-                          width: MediaQuery.of(context).size.width * 0.5,
-                          child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              child: Text(AppLocalizations.of(context)!.ok)),
-                        )
-                      ],
-                    )
-                  : WillPopScope(
-                      onWillPop: () async {
-                        Fluttertoast.showToast(
-                            msg: AppLocalizations.of(context)!
-                                .pressTheButtonToExit,
-                            toastLength: Toast.LENGTH_SHORT,
-                            gravity: ToastGravity.SNACKBAR,
-                            timeInSecForIosWeb: 1,
-                            backgroundColor: Colors.grey,
-                            textColor: Colors.red,
-                            fontSize: 16.0);
-                        return false;
-                      },
-                      child: SafeArea(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Stack(
-                              children: [
-                                VideoPlayerWidget(
-                                    movieInformation: widget.movieInformation,
-                                    url: linkPlay,
-                                    dataFilm: state.dataFilm),
-                                Positioned(
+    return SafeArea(
+      child: BlocBuilder<MovieCubit, MovieState>(
+        builder: (context, state) {
+          // ignore: deprecated_member_use
+          return Scaffold(
+            body: isLoading
+                ? const Center(
+                    child: LoadingWidget(),
+                  )
+                : context.watch<MovieCubit>().state.dataFilm == null
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Center(
+                            child:
+                                Text(AppLocalizations.of(context)!.movieUpdate),
+                          ),
+                          const SizedBox(
+                            height: 20,
+                          ),
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.5,
+                            child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                child: Text(AppLocalizations.of(context)!.ok)),
+                          )
+                        ],
+                      )
+                    : WillPopScope(
+                        onWillPop: () async {
+                          Fluttertoast.showToast(
+                              msg: AppLocalizations.of(context)!
+                                  .pressTheButtonToExit,
+                              toastLength: Toast.LENGTH_SHORT,
+                              gravity: ToastGravity.SNACKBAR,
+                              timeInSecForIosWeb: 1,
+                              backgroundColor: Colors.grey,
+                              textColor: Colors.red,
+                              fontSize: 16.0);
+                          return false;
+                        },
+                        child: SafeArea(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Stack(
+                                children: [
+                                  VideoPlayerWidget(
+                                      movieInformation: widget.movieInformation,
+                                      url: linkPlay,
+                                      dataFilm: state.dataFilm),
+                                  Positioned(
                                     left: 20,
                                     top: 20,
                                     child: GestureDetector(
@@ -117,15 +118,17 @@ class _WatchAMovieState extends State<WatchAMovie> {
                                         Navigator.pop(context);
                                       },
                                       child: const Icon(Icons.arrow_back),
-                                    ))
-                              ],
-                            ),
-                          ],
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

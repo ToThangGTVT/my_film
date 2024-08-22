@@ -40,20 +40,22 @@ class ItemMovieInformation extends StatelessWidget {
           ),
         ),
         SizedBox(
-          height: 80,
+          height: 100,
           width: width * 0.6 - 32,
           child: Padding(
-            padding: const EdgeInsets.all(10.0),
+            padding: const EdgeInsets.symmetric(horizontal: 10.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   name,
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 4,
                 ),
+                const SizedBox(height: 4,),
                 Container(
-                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
+                    padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
                     decoration: BoxDecoration(
                         color: theme.onInverseSurface,
                         borderRadius: BorderRadius.circular(8)),
