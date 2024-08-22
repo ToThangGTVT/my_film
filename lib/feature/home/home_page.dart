@@ -145,111 +145,117 @@ class _HomePageState extends State<HomePage> {
                         builder: (context, state) {
                           return Container(
                             color: theme.colorScheme.primary,
-                            child: CustomScrollView(
-                              physics: const BouncingScrollPhysics(),
-                              controller: _scrollController,
-                              slivers: [
-                                state.movies.isNotEmpty
-                                    ? SliverToBoxAdapter(
-                                  child: Container(
-                                    margin: const EdgeInsets.only(top: 8),
-                                    height: height * 0.23,
-                                    width: width,
-                                    child: CarouselSlider.builder(
-                                      itemCount: state.movies.length,
-                                      itemBuilder: (BuildContext context,
-                                          int itemIndex,
-                                          int pageViewIndex) =>
-                                          ItemSliderImage(
-                                            imageUrl: state
-                                                .movies[itemIndex].poster_url,
-                                            onTap: () {
-                                              movieCubit.addToWatchHistory(
-                                                  itemFilm:
-                                                  state.movies[itemIndex]);
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      WatchAMovie(
-                                                        movieInformation:
-                                                        state.movies[itemIndex],
-                                                      ),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                      options: CarouselOptions(
-                                        autoPlay: true,
-                                        enlargeCenterPage: true,
-                                        viewportFraction: 0.3,
-                                        onPageChanged: (index, reason) {
-                                          homePageCubit.setPageIndex(index);
-                                        },
-                                        aspectRatio: 16 / 9,
+                            child: RefreshIndicator(
+                              color: theme.colorScheme.onPrimary,
+                              backgroundColor: theme.colorScheme.onSurface,
+                              onRefresh: initialization,
+                              child: CustomScrollView(
+                                physics: const BouncingScrollPhysics(),
+                                controller: _scrollController,
+                                slivers: [
+                                  state.movies.isNotEmpty
+                                      ? SliverToBoxAdapter(
+                                    child: Container(
+                                      margin: const EdgeInsets.only(top: 8),
+                                      height: height * 0.23,
+                                      width: width,
+                                      child: CarouselSlider.builder(
+                                        itemCount: state.movies.length,
+                                        itemBuilder: (BuildContext context,
+                                            int itemIndex,
+                                            int pageViewIndex) =>
+                                            ItemSliderImage(
+                                              imageUrl: state
+                                                  .movies[itemIndex].poster_url,
+                                              onTap: () {
+                                                movieCubit.addToWatchHistory(
+                                                    itemFilm:
+                                                    state.movies[itemIndex]);
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        WatchAMovie(
+                                                          movieInformation:
+                                                          state.movies[itemIndex],
+                                                        ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                        options: CarouselOptions(
+                                          autoPlay: true,
+                                          enlargeCenterPage: true,
+                                          autoPlayInterval: const Duration(seconds: 7),
+                                          viewportFraction: 0.3,
+                                          onPageChanged: (index, reason) {
+                                            homePageCubit.setPageIndex(index);
+                                          },
+                                          aspectRatio: 16 / 9,
+                                        ),
                                       ),
                                     ),
+                                  )
+                                      : const SliverToBoxAdapter(),
+                                  SliverToBoxAdapter(
+                                    child: Center(
+                                      child: state.movies.isNotEmpty
+                                          ? Column(
+                                        children: [
+                                          const SizedBox(
+                                            height: 10,
+                                          ),
+                                          SmoothPageIndicator(
+                                              controller: PageController(
+                                                  initialPage: homePageCubit
+                                                      .state
+                                                      .currentIndexPage), // PageController
+                                              count: state.movies.length,
+                                              effect: WormEffect(
+                                                  dotWidth: 6,
+                                                  dotHeight: 6,
+                                                  activeDotColor: theme
+                                                      .colorScheme
+                                                      .onPrimary), // your preferred effect
+                                              onDotClicked: (index) {}),
+                                        ],
+                                      )
+                                          : const SizedBox(),
+                                    ),
                                   ),
-                                )
-                                    : const SliverToBoxAdapter(),
-                                SliverToBoxAdapter(
-                                  child: Center(
-                                    child: state.movies.isNotEmpty
-                                        ? Column(
-                                      children: [
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
-                                        SmoothPageIndicator(
-                                            controller: PageController(
-                                                initialPage: homePageCubit
-                                                    .state
-                                                    .currentIndexPage), // PageController
-                                            count: state.movies.length,
-                                            effect: WormEffect(
-                                                dotWidth: 6,
-                                                dotHeight: 6,
-                                                activeDotColor: theme
-                                                    .colorScheme
-                                                    .onPrimary), // your preferred effect
-                                            onDotClicked: (index) {}),
-                                      ],
-                                    )
-                                        : const SizedBox(),
+
+                                  /// phim lẻ
+                                  ItemGridAndTitle(
+                                    itemFilms: state.singleMovies,
+                                    title: app?.singleMovie ?? '',
+                                    slug: 'phim-le',
                                   ),
-                                ),
 
-                                /// phim lẻ
-                                ItemGridAndTitle(
-                                  itemFilms: state.singleMovies,
-                                  title: app?.singleMovie ?? '',
-                                  slug: 'phim-le',
-                                ),
+                                  /// phim hoạt hình
+                                  state.cartoon.isEmpty
+                                      ? const SliverToBoxAdapter()
+                                      : TitleAndChevronRight(
+                                      itemFilms: state.cartoon,
+                                      title: app?.cartoon ?? '',
+                                      color: theme.colorScheme.tertiary),
+                                  state.cartoon.isEmpty
+                                      ? const SliverToBoxAdapter()
+                                      : ItemFilmHorizontally(
+                                    itemsFilm: state.cartoon,
+                                  ),
 
-                                /// phim hoạt hình
-                                state.cartoon.isEmpty
-                                    ? const SliverToBoxAdapter()
-                                    : TitleAndChevronRight(
-                                    itemFilms: state.cartoon,
-                                    title: app?.cartoon ?? '',
-                                    color: theme.colorScheme.tertiary),
-                                state.cartoon.isEmpty
-                                    ? const SliverToBoxAdapter()
-                                    : ItemFilmHorizontally(
-                                  itemsFilm: state.cartoon,
-                                ),
-
-                                ///phim bộ
-                                ItemGridAndTitle(
-                                  itemFilms: state.seriesMovies,
-                                  title: app?.seriesMovie ?? '',
-                                  slug: 'phim-bo',
-                                ),
-                                const SliverToBoxAdapter(
-                                  child: SizedBox(height: 30),
-                                )
-                              ],
-                            ),
+                                  ///phim bộ
+                                  ItemGridAndTitle(
+                                    itemFilms: state.seriesMovies,
+                                    title: app?.seriesMovie ?? '',
+                                    slug: 'phim-bo',
+                                  ),
+                                  const SliverToBoxAdapter(
+                                    child: SizedBox(height: 30),
+                                  )
+                                ],
+                              ),
+                            )
                           );
                         },
                       ),
