@@ -6,6 +6,7 @@ import 'package:app/component/loading_widget.dart';
 import 'package:app/config/app_size.dart';
 import 'package:app/config/print_color.dart';
 import 'package:app/feature/home/cubit/movie_download/movie_download_cubit.dart';
+import 'package:app/feature/home/cubit/movie_download/movie_download_state.dart';
 import 'package:app/feature/home/models/data_film.dart';
 import 'package:app/feature/home/models/movie_category.dart';
 import 'package:app/feature/home/models/movie_episodes.dart';
@@ -47,6 +48,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   List<String> beginningOfContent = [];
   String summaryContent = '';
   final ReceivePort _port = ReceivePort();
+  late final MovieDownloadCubit movieDownloadCubit;
 
   void splitContent() {
     // làm chức năng chia nhỏ content để hiện 1 phần
@@ -78,7 +80,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       ),
     );
 
-    MovieDownloadCubit.initAsync();
+    movieDownloadCubit = context.watch<MovieDownloadCubit>();
+    movieDownloadCubit.initAsync();
   }
 
   Future<bool> _checkPermission() async {
@@ -168,7 +171,12 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                             ? theme.colorScheme.onPrimary
                             : theme.colorScheme.tertiary,
                       ),
-                    )
+                    ),
+                    const SizedBox(width: 6),
+                    BlocBuilder<MovieDownloadCubit, MovieDownloadState>(
+                      builder: (context, state) {
+                      return Text(state.progress.toString());
+                    },)
                   ],
                 ),
                 SizedBox(

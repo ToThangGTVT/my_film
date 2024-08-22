@@ -26,7 +26,7 @@ class MovieDownloadCubit extends Cubit<MovieDownloadState> {
         errorCallback: errorCallback);
   }
 
-  static Future<void> initAsync() async {
+  Future<void> initAsync() async {
     String saveDir = await _findSavePath();
     M3u8Downloader.initialize(
         onSelect: () async {
@@ -38,14 +38,15 @@ class MovieDownloadCubit extends Cubit<MovieDownloadState> {
         saveDir: saveDir,
         threadCount: 2,
         convertMp4: false,
-        debugMode: false
+        debugMode: true
     );
-    // 注册监听器
+
     IsolateNameServer.registerPortWithName(
         _port.sendPort, 'downloader_send_port');
     _port.listen((dynamic data) {
-      // 监听数据请求
-      print(data);
+      emit(state.copyWith(
+        progress: int.tryParse(data['progress'])
+      ));
     });
   }
 
@@ -79,6 +80,11 @@ class MovieDownloadCubit extends Cubit<MovieDownloadState> {
       args["status"] = 1;
       send.send(args);
     }
+    // emit(state.copyWith(
+    //     status: MovieDownloadStatus.loading,
+    //     progress: 2
+    // ));
+
   }
 
   @pragma('vm:entry-point')
