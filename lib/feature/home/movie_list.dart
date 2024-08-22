@@ -1,3 +1,20 @@
+import 'dart:async';
+
+import 'package:app/component/header_title_app.dart';
+import 'package:app/config/app_size.dart';
+import 'package:app/config/key_app.dart';
+import 'package:app/feature/home/models/movie_information.dart';
+import 'package:app/feature/home/watch_a_movie.dart';
+import 'package:app/feature/home/widgets/item_movie_information.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+import '../../component/loading_widget.dart';
+import '../../l10n/cubit/locale_cubit.dart';
+import 'cubit/movie_cubit.dart';
+import 'cubit/movie_state.dart';
+
 import 'package:app/component/header_title_app.dart';
 import 'package:app/config/app_size.dart';
 import 'package:app/config/key_app.dart';
@@ -14,25 +31,25 @@ import 'cubit/movie_cubit.dart';
 import 'cubit/movie_state.dart';
 
 class MovieList extends StatefulWidget {
+  const MovieList(
+      {super.key,
+      this.title = '',
+      required this.slug,
+      required this.itemFilms});
   final String title;
   final String slug;
   final List<MovieInformation> itemFilms;
 
-  const MovieList({
-    super.key,
-    required this.title,
-    required this.slug,
-    required this.itemFilms,
-  });
-
   @override
-  _MovieListWidgetState createState() => _MovieListWidgetState();
+  _MovieListState createState() => _MovieListState();
 }
 
-class _MovieListWidgetState extends State<MovieList> {
+class _MovieListState extends State<MovieList> {
+  List<MovieInformation> listFilm = [];
+  int page = 1;
   late ScrollController controller;
-  var page = 1;
   var isLoading = true;
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -47,13 +64,21 @@ class _MovieListWidgetState extends State<MovieList> {
   }
 
   void _scrollListener() {
-    var movieCubit = context.read<MovieCubit>();
-    var localeCubit = context.read<LocaleCubit>();
+    if (controller.position.extentAfter < (context.size?.height ?? 0)) {
+      _getMoreData();
+    }
+  }
 
-    if (controller.position.extentAfter < context.size!.height) {
-      if (isLoading == true) {
-        return;
-      }
+  void _getMoreData() {
+    if (isLoading) {
+      return;
+    }
+
+    // Debounce logic to prevent rapid calls
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      isLoading = true;
+      var movieCubit = context.read<MovieCubit>();
       switch (widget.slug) {
         case 'phim-le':
           movieCubit.getAListOfIndividualMovies(++page);
@@ -67,8 +92,8 @@ class _MovieListWidgetState extends State<MovieList> {
         default:
           break;
       }
-      isLoading = true;
-    }
+      isLoading = false;
+    });
   }
 
   @override
@@ -77,7 +102,6 @@ class _MovieListWidgetState extends State<MovieList> {
     final double height = MediaQuery.of(context).size.height;
     final app = AppLocalizations.of(context);
     final theme = Theme.of(context);
-
     var listFilm = widget.itemFilms;
 
     return Scaffold(
@@ -90,49 +114,48 @@ class _MovieListWidgetState extends State<MovieList> {
             },
             title: widget.title,
           ),
-          listFilm.isEmpty
-              ? Container(
-                  alignment: Alignment.center,
-                  height: height - 136,
-                  width: width,
-                  child: Text(app!.movieListIsEmpty),
-                )
-              : Expanded(
-                  child: BlocBuilder<MovieCubit, MovieState>(
-                      builder: (context, state) {
-                        isLoading = false;
-                    return ListView.separated(
+          Expanded(
+            child: BlocBuilder<MovieCubit, MovieState>(
+              builder: (context, state) {
+                isLoading = false;
+                return listFilm.isEmpty
+                    ? Container(
+                        alignment: Alignment.center,
+                        height: height - 136,
+                        width: width,
+                        child: Text(app!.movieListIsEmpty),
+                      )
+                    : ListView.separated(
                         controller: controller,
                         physics: const BouncingScrollPhysics(),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 20),
                         itemBuilder: (context, index) {
-                          if (index >= listFilm.length - 1) {
-                            // getMoreData();
-                            return const LoadingWidget();
-                          }
-
                           return GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => WatchAMovie(
-                                            movieInformation:
-                                                listFilm[index])));
-                              },
-                              child: ItemMovieInformation(
-                                imageUrl: listFilm[index].thumb_url,
-                                name: listFilm[index].name,
-                                year: listFilm[index].year.toString(),
-                              ));
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => WatchAMovie(
+                                      movieInformation: listFilm[index]),
+                                ),
+                              );
+                            },
+                            child: ItemMovieInformation(
+                              imageUrl: listFilm[index].thumb_url,
+                              name: listFilm[index].name,
+                              year: listFilm[index].year.toString(),
+                            ),
+                          );
                         },
                         separatorBuilder: (context, index) => const SizedBox(
-                              height: AppSize.size16,
-                            ),
-                        itemCount: listFilm.length);
-                  }),
-                )
+                          height: AppSize.size16,
+                        ),
+                        itemCount: listFilm.length,
+                      );
+              },
+            ),
+          ),
         ],
       ),
     );

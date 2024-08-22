@@ -55,20 +55,23 @@ class _ItemGridAndTitleState extends State<ItemGridAndTitle> {
                                     slug: widget.slug,
                                   )));
                     },
-                    child: Row(
-                      children: [
-                        Text(
-                          widget.title,
-                          style: const TextStyle(
-                              fontSize: AppSize.size20,
-                              fontWeight: FontWeight.w600),
-                        ),
-                        const Spacer(),
-                        const Text("See more"),
-                        const Icon(Icons.arrow_forward_ios_outlined)
-                      ],
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Row(
+                        children: [
+                          Text(
+                            widget.title,
+                            style: const TextStyle(
+                                fontSize: AppSize.size20,
+                                fontWeight: FontWeight.w600),
+                          ),
+                          const Spacer(),
+                          const Text("See more"),
+                          const Icon(Icons.arrow_forward_ios_outlined)
+                        ],
+                      ),
                     ),
-                  ),
+                    ),
                   const SizedBox(height: 10.0),
                   GridView.builder(
                     shrinkWrap: true,

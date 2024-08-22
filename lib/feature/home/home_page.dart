@@ -135,7 +135,10 @@ class _HomePageState extends State<HomePage> {
               : homePageCubitWatch.state.isLoadingHome
                   ? Scaffold(
                       appBar: _appBar(context, _scrollController),
-                      body: _bodyShimmer(context))
+                      body: Container(
+                          color: theme.colorScheme.primary,
+                        child: _bodyShimmer(context)),
+                      )
                   : Scaffold(
                       appBar: _appBar(context, _scrollController),
                       body: BlocBuilder<MovieCubit, MovieState>(
@@ -428,17 +431,20 @@ class TitleAndChevronRight extends StatelessWidget {
                           title: title, slug: slug,
                         )));
           },
-          child: Row(
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                    fontSize: AppSize.size20, fontWeight: FontWeight.w600),
-              ),
-              const Spacer(),
-              const Text("See more"),
-              const Icon(Icons.arrow_forward_ios_outlined)
-            ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 0),
+            child: Row(
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                      fontSize: AppSize.size20, fontWeight: FontWeight.w600),
+                ),
+                const Spacer(),
+                const Text("See more"),
+                const Icon(Icons.arrow_forward_ios_outlined)
+              ],
+            ),
           ),
         ),
       ),

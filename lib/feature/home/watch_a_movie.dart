@@ -115,11 +115,7 @@ class _WatchAMovieState extends State<WatchAMovie> {
                                       onTap: () {
                                         Navigator.pop(context);
                                       },
-                                      child: SvgPicture.asset(
-                                        'assets/icons/chevron_down.svg',
-                                        color: Colors.red,
-                                        width: 30,
-                                      ),
+                                      child: const Icon(Icons.arrow_back),
                                     ))
                               ],
                             ),

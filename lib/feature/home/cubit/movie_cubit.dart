@@ -92,7 +92,7 @@ class MovieCubit extends Cubit<MovieState> {
   Future<void> getAListOfIndividualMovies(int page) async {
     emit(state.copyWith(status: MovieStatus.loading));
 
-    final data = await FetchApiMovie.getAListOfIndividualMovies();
+    final data = await FetchApiMovie.getAListOfIndividualMovies(page);
 
     List items = data['data']['items'];
     for (var i = 0; i < items.length; i++) {
@@ -121,7 +121,7 @@ class MovieCubit extends Cubit<MovieState> {
   Future<void> getTheListOfMoviesAndSeries(int page) async {
     emit(state.copyWith(status: MovieStatus.loading));
 
-    final data = await FetchApiMovie.getTheListOfMoviesAndSeries();
+    final data = await FetchApiMovie.getTheListOfMoviesAndSeries(page);
 
     List items = data['data']['items'];
     for (var i = 0; i < items.length; i++) {
@@ -149,7 +149,7 @@ class MovieCubit extends Cubit<MovieState> {
   Future<void> getTheListOfCartoons(int page) async {
     emit(state.copyWith(status: MovieStatus.loading));
 
-    final data = await FetchApiMovie.getTheListOfCartoons();
+    final data = await FetchApiMovie.getTheListOfCartoons(page);
     List items = data['data']['items'];
     for (var i = 0; i < items.length; i++) {
       final MovieInformation item;

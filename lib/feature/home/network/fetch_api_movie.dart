@@ -87,8 +87,8 @@ class FetchApiMovie {
     return result;
   }
 
-  static Future<Map<String, dynamic>> getAListOfIndividualMovies() async {
-    var uri = Uri.https(KeyApp.Base_URL, KeyApp.SINGLE_MOVIES, {'limit': '${KeyApp.MAX_SIZE}'});
+  static Future<Map<String, dynamic>> getAListOfIndividualMovies(int page) async {
+    var uri = Uri.https(KeyApp.Base_URL, KeyApp.SINGLE_MOVIES, {'limit': '${KeyApp.MAX_SIZE}', 'page': '$page'});
     _logUri(uri);
     Map<String, dynamic> result = {};
     try {
@@ -124,8 +124,8 @@ class FetchApiMovie {
     return result;
   }
 
-  static Future<Map<String, dynamic>> getTheListOfMoviesAndSeries() async {
-    var uri = Uri.https(KeyApp.Base_URL, KeyApp.SERIES_MOVIES, {'limit': '${KeyApp.MAX_SIZE}'});
+  static Future<Map<String, dynamic>> getTheListOfMoviesAndSeries(int page) async {
+    var uri = Uri.https(KeyApp.Base_URL, KeyApp.SERIES_MOVIES, {'limit': '${KeyApp.MAX_SIZE}', 'page': '$page'});
     _logUri(uri);
     Map<String, dynamic> result = {};
     try {
@@ -161,8 +161,8 @@ class FetchApiMovie {
     return result;
   }
 
-  static Future<Map<String, dynamic>> getTheListOfCartoons() async {
-    var uri = Uri.https(KeyApp.Base_URL, KeyApp.CARTOON, {'limit': '${KeyApp.MAX_SIZE}'});
+  static Future<Map<String, dynamic>> getTheListOfCartoons(int page) async {
+    var uri = Uri.https(KeyApp.Base_URL, KeyApp.CARTOON, {'limit': '${KeyApp.MAX_SIZE}', 'page': '$page'});
     _logUri(uri);
     Map<String, dynamic> result = {};
     try {

@@ -91,11 +91,15 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
             flickManager: flickManager,
             flickVideoWithControls: FlickVideoWithControls(
               aspectRatioWhenLoading: 16 / 9,
-              videoFit: BoxFit.fill,
+              videoFit: BoxFit.fitWidth,
               controls: FlickPortraitControls(
-                iconSize: 40,
+                iconSize: 30,
                 progressBarSettings: FlickProgressBarSettings(
-                  playedColor: Colors.blue,
+                  bufferedColor: Colors.white.withOpacity(0.5),
+                  playedColor: Colors.red,
+                  height: 4,
+                  handleRadius: 9,
+                  handleColor: Colors.red,
                 ),
               ),
               playerLoadingFallback: const LoadingWidget(),
@@ -135,8 +139,8 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                         });
                       },
                       child: Icon(
-                        Icons.favorite,
-                        size: AppSize.size35,
+                        Icons.favorite_rounded,
+                        size: AppSize.size28,
                         color: widget.movieInformation!.isFavorite
                             ? theme.colorScheme.onPrimary
                             : theme.colorScheme.tertiary,
