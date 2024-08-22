@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:app/feature/home/cubit/home_page_cubit.dart';
-import 'package:app/feature/home/cubit/movie_cubit.dart';
+import 'package:app/feature/home/cubit/home_page/home_page_cubit.dart';
+import 'package:app/feature/home/cubit/movie/movie_cubit.dart';
 import 'package:app/l10n/cubit/locale_cubit.dart';
 import 'package:app/my_home_app.dart';
 import 'package:flutter/material.dart';

@@ -1,12 +1,13 @@
 import 'package:app/component/header_app.dart';
-import 'package:app/feature/home/cubit/movie_cubit.dart';
-import 'package:app/feature/home/cubit/movie_state.dart';
+import 'package:app/feature/home/cubit/movie/movie_cubit.dart';
 import 'package:app/feature/home/watch_a_movie.dart';
 import 'package:app/l10n/cubit/locale_cubit.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+import '../home/cubit/movie/movie_state.dart';
 
 class FavoriteMoviePage extends StatelessWidget {
   const FavoriteMoviePage({super.key});

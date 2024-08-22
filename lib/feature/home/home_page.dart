@@ -1,9 +1,5 @@
 import 'dart:async';
 import 'package:app/config/app_size.dart';
-import 'package:app/feature/home/cubit/home_page_cubit.dart';
-import 'package:app/feature/home/cubit/home_page_state.dart';
-import 'package:app/feature/home/cubit/movie_cubit.dart';
-import 'package:app/feature/home/cubit/movie_state.dart';
 import 'package:app/feature/home/models/movie_information.dart';
 import 'package:app/feature/home/movie_list.dart';
 import 'package:app/feature/home/watch_a_movie.dart';
@@ -20,6 +16,11 @@ import 'package:page_transition/page_transition.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+
+import 'cubit/home_page/home_page_cubit.dart';
+import 'cubit/home_page/home_page_state.dart';
+import 'cubit/movie/movie_cubit.dart';
+import 'cubit/movie/movie_state.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({

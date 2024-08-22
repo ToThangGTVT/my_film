@@ -1,7 +1,10 @@
+import 'dart:io';
+import 'dart:isolate';
+import 'dart:ui';
+
 import 'package:app/component/loading_widget.dart';
 import 'package:app/config/app_size.dart';
 import 'package:app/config/print_color.dart';
-import 'package:app/feature/home/cubit/movie_cubit.dart';
 import 'package:app/feature/home/models/data_film.dart';
 import 'package:app/feature/home/models/movie_category.dart';
 import 'package:app/feature/home/models/movie_episodes.dart';
@@ -10,9 +13,16 @@ import 'package:app/l10n/cubit/locale_cubit.dart';
 import 'package:flick_video_player/flick_video_player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:m3u8_downloader/m3u8_downloader.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 
+import '../cubit/movie/movie_cubit.dart';
 // ignore: must_be_immutable
 class VideoPlayerWidget extends StatefulWidget {
   VideoPlayerWidget(
@@ -35,6 +45,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   List<String> items = [];
   List<String> beginningOfContent = [];
   String summaryContent = '';
+  final ReceivePort _port = ReceivePort();
 
   void splitContent() {
     // làm chức năng chia nhỏ content để hiện 1 phần
@@ -65,6 +76,104 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         Uri.parse(widget.url),
       ),
     );
+
+    initAsync();
+  }
+
+  void initAsync() async {
+    String saveDir = await _findSavePath();
+    M3u8Downloader.initialize(
+        onSelect: () async {
+          print('下载成功点击');
+          return null;
+        }
+    );
+    M3u8Downloader.config(
+        saveDir: saveDir,
+        threadCount: 2,
+        convertMp4: false,
+        debugMode: false
+    );
+    // 注册监听器
+    IsolateNameServer.registerPortWithName(_port.sendPort, 'downloader_send_port');
+    _port.listen((dynamic data) {
+      // 监听数据请求
+      print(data);
+    });
+  }
+
+  Future<String> _findSavePath() async {
+    late String saveDir;
+
+    if (Platform.isAndroid) {
+      // Get the Downloads directory on Android
+      Directory? directory = Directory('/storage/emulated/0/Download');
+      saveDir = directory.path;
+    } else {
+      // For other platforms, use the application documents directory
+      final directory = await getApplicationDocumentsDirectory();
+      saveDir = path.join(directory.path, 'vPlayDownload');
+    }
+
+    Directory root = Directory(saveDir);
+    if (!root.existsSync()) {
+      await root.create(recursive: true);
+    }
+
+    print(saveDir);
+    return saveDir;
+  }
+
+  @pragma('vm:entry-point')
+  static progressCallback(dynamic args) {
+    final SendPort? send = IsolateNameServer.lookupPortByName('downloader_send_port');
+    if (send != null) {
+      args["status"] = 1;
+      send.send(args);
+    }
+  }
+  @pragma('vm:entry-point')
+  static successCallback(dynamic args) {
+    final SendPort? send = IsolateNameServer.lookupPortByName('downloader_send_port');
+    if (send != null) {
+      send.send({
+        "status": 2,
+        "url": args["url"],
+        "filePath": args["filePath"],
+        "dir": args["dir"]
+      });
+
+      Fluttertoast.showToast(
+          msg: "Download Success!!!",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          timeInSecForIosWeb: 1,
+          fontSize: 16.0
+      );
+    }
+  }
+  @pragma('vm:entry-point')
+  static errorCallback(dynamic args) {
+    final SendPort? send = IsolateNameServer.lookupPortByName('downloader_send_port');
+    if (send != null) {
+      send.send({"status": 3, "url": args["url"]});
+    }
+
+    Fluttertoast.showToast(
+        msg: "Download ERROR!!!",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 1,
+        fontSize: 16.0
+    );
+  }
+
+  Future<bool> _checkPermission() async {
+    var status = await Permission.storage.status;
+    if (!status.isGranted) {
+      status = await Permission.storage.request();
+    }
+    return status.isGranted;
   }
 
   @override
@@ -84,28 +193,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          height: height * 0.3,
-          child: FlickVideoPlayer(
-            wakelockEnabled: true,
-            flickManager: flickManager,
-            flickVideoWithControls: FlickVideoWithControls(
-              aspectRatioWhenLoading: 16 / 9,
-              videoFit: BoxFit.fitWidth,
-              controls: FlickPortraitControls(
-                iconSize: 30,
-                progressBarSettings: FlickProgressBarSettings(
-                  bufferedColor: Colors.white.withOpacity(0.5),
-                  playedColor: Colors.red,
-                  height: 4,
-                  handleRadius: 9,
-                  handleColor: Colors.red,
-                ),
-              ),
-              playerLoadingFallback: const LoadingWidget(),
-            ),
-          ),
-        ),
+        VideoPlayer(height: height, flickManager: flickManager),
         Container(
           color: theme.colorScheme.primary,
           padding: const EdgeInsets.only(left: 10, right: 10, top: 20),
@@ -116,7 +204,6 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       AppLocalizations.of(context)!.film,
@@ -124,6 +211,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                           fontWeight: FontWeight.w600,
                           fontSize: AppSize.size16),
                     ),
+                    const Spacer(),
                     GestureDetector(
                       onTap: () {
                         if (widget.movieInformation!.isFavorite == false) {
@@ -140,6 +228,30 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
                       },
                       child: Icon(
                         Icons.favorite_rounded,
+                        size: AppSize.size28,
+                        color: widget.movieInformation!.isFavorite
+                            ? theme.colorScheme.onPrimary
+                            : theme.colorScheme.tertiary,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: () {
+                        _checkPermission().then((hasGranted) async {
+                        if (hasGranted) {
+                          await M3u8Downloader.config(
+                            convertMp4: true,
+                          );
+                          M3u8Downloader.download(url: widget.url,
+                              name: widget.dataFilm?.movie.name ?? "video-${DateTime.now().millisecondsSinceEpoch}",
+                              progressCallback: progressCallback,
+                              successCallback: successCallback,
+                              errorCallback: errorCallback);
+                        }
+                        });
+                      },
+                      child: Icon(
+                        Icons.arrow_circle_down_rounded,
                         size: AppSize.size28,
                         color: widget.movieInformation!.isFavorite
                             ? theme.colorScheme.onPrimary
@@ -227,6 +339,43 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   }
 }
 
+class VideoPlayer extends StatelessWidget {
+  const VideoPlayer({
+    super.key,
+    required this.height,
+    required this.flickManager,
+  });
+
+  final double height;
+  final FlickManager flickManager;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: height * 0.3,
+      child: FlickVideoPlayer(
+        wakelockEnabled: true,
+        flickManager: flickManager,
+        flickVideoWithControls: FlickVideoWithControls(
+          aspectRatioWhenLoading: 16 / 9,
+          videoFit: BoxFit.fitWidth,
+          controls: FlickPortraitControls(
+            iconSize: 30,
+            progressBarSettings: FlickProgressBarSettings(
+              bufferedColor: Colors.white.withOpacity(0.5),
+              playedColor: Colors.red,
+              height: 4,
+              handleRadius: 9,
+              handleColor: Colors.red,
+            ),
+          ),
+          playerLoadingFallback: const LoadingWidget(),
+        ),
+      ),
+    );
+  }
+}
+
 class EpisodeNumberOfTheMovie extends StatefulWidget {
   const EpisodeNumberOfTheMovie(
       {super.key, required this.items, required this.flickManager});
@@ -284,13 +433,13 @@ class _EpisodeNumberOfTheMovieState extends State<EpisodeNumberOfTheMovie> {
             },
             child: Container(
               alignment: Alignment.center,
-              width: 35,
-              height: 45,
+              width: 2,
+              height: 3,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: indexSelected == index ? Colors.pink : Colors.grey,
+                borderRadius: BorderRadius.circular(0),
+                color: indexSelected == index ? Colors.red : Colors.grey,
               ),
-              child: Text('${index + 1}'),
+              child: Text('${index + 1}', style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold),),
             ),
           ),
         ),

@@ -1,5 +1,4 @@
 import 'package:app/config/app_size.dart';
-import 'package:app/feature/home/cubit/movie_cubit.dart';
 import 'package:app/feature/home/models/movie_information.dart';
 import 'package:app/feature/home/movie_list.dart';
 import 'package:app/feature/home/watch_a_movie.dart';
@@ -10,6 +9,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shimmer/shimmer.dart';
+
+import '../cubit/movie/movie_cubit.dart';
 
 // ignore: must_be_immutable
 class ItemGridAndTitle extends StatefulWidget {
@@ -100,7 +101,7 @@ class _ItemGridAndTitleState extends State<ItemGridAndTitle> {
                           children: [
                             Expanded(
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: BorderRadius.circular(0),
                                 child: CachedNetworkImage(
                                   imageUrl: widget.itemFilms[index].poster_url,
                                   imageBuilder: (context, imageProvider) =>

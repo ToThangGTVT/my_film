@@ -12,7 +12,7 @@ class ItemSliderImage extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(0),
         child: CachedNetworkImage(
           width: width,
           imageUrl: imageUrl,

@@ -1,4 +1,3 @@
-import 'package:app/feature/home/cubit/movie_cubit.dart';
 import 'package:app/feature/home/models/movie_information.dart';
 import 'package:app/feature/home/watch_a_movie.dart';
 import 'package:app/l10n/cubit/locale_cubit.dart';
@@ -6,6 +5,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shimmer/shimmer.dart';
+
+import '../cubit/movie/movie_cubit.dart';
 
 // ignore: must_be_immutable
 
@@ -48,7 +49,7 @@ class ItemFilmHorizontally extends StatelessWidget {
                 children: [
                   Expanded(
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(0),
                       child: CachedNetworkImage(
                         imageUrl: itemsFilm[index].poster_url,
                         imageBuilder: (context, imageProvider) => Container(
