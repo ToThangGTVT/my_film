@@ -78,7 +78,6 @@ class _MyAppState extends State<MyApp> {
     final ThemeCubit themeCubit = context.watch<ThemeCubit>();
     final LocaleCubit localeCubitWatch = context.watch<LocaleCubit>();
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: Locale(localeCubit.state.languageCode.isEmpty

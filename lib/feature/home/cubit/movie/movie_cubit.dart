@@ -24,13 +24,7 @@ class MovieCubit extends Cubit<MovieState> {
     emit(state.copyWith(status: MovieStatus.loading));
 
     final data = await FetchApiMovie.getMovies(page);
-
-    List items = data['items'];
-    for (var i = 0; i < items.length; i++) {
-      final MovieInformation item;
-      item = MovieInformation.fromJson(items[i]);
-      newMovies.add(item);
-    }
+    newMovies = MovieInformation.convertToList(data['items']);
     if (state.favoriteMovies.isNotEmpty && newMovies.isNotEmpty) {
       for (int i = 0; i < newMovies.length; i++) {
         for (int j = 0; j < state.favoriteMovies.length; j++) {
