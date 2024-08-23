@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 ThemeData dark = ThemeData(
     useMaterial3: false,
-    fontFamily: GoogleFonts.notoSans().fontFamily,
+    fontFamily: GoogleFonts.nunitoSans().fontFamily,
     colorScheme: const ColorScheme(
       brightness: Brightness.dark,
       // 4 màu chủ đạo

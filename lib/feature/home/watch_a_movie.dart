@@ -101,27 +101,22 @@ class _WatchAMovieState extends State<WatchAMovie> {
                           return false;
                         },
                         child: SafeArea(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Stack(
                             children: [
-                              Stack(
-                                children: [
-                                  VideoPlayerWidget(
-                                      movieInformation: widget.movieInformation,
-                                      url: linkPlay,
-                                      dataFilm: state.dataFilm),
-                                  Positioned(
-                                    left: 20,
-                                    top: 20,
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        Navigator.pop(context);
-                                      },
-                                      child: const Icon(Icons.arrow_back),
-                                    ),
-                                  )
-                                ],
-                              ),
+                              VideoPlayerWidget(
+                                  movieInformation: widget.movieInformation,
+                                  url: linkPlay,
+                                  dataFilm: state.dataFilm),
+                              Positioned(
+                                left: 20,
+                                top: 20,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                  },
+                                  child: const Icon(Icons.arrow_back),
+                                ),
+                              )
                             ],
                           ),
                         ),

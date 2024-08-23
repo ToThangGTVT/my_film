@@ -233,17 +233,23 @@ class _HomePageState extends State<HomePage> {
                                   ),
 
                                   /// phim hoạt hình
-                                  state.cartoon.isEmpty
-                                      ? const SliverToBoxAdapter()
-                                      : TitleAndChevronRight(
-                                      itemFilms: state.cartoon,
-                                      title: app?.cartoon ?? '',
-                                      color: theme.colorScheme.tertiary),
-                                  state.cartoon.isEmpty
-                                      ? const SliverToBoxAdapter()
-                                      : ItemFilmHorizontally(
-                                    itemsFilm: state.cartoon,
+                                  // state.cartoon.isEmpty
+                                  //     ? const SliverToBoxAdapter()
+                                  //     : TitleAndChevronRight(
+                                  //     itemFilms: state.cartoon,
+                                  //     title: app?.cartoon ?? '',
+                                  //     color: theme.colorScheme.tertiary),
+                                  // state.cartoon.isEmpty
+                                  //     ? const SliverToBoxAdapter()
+                                  //     : ItemFilmHorizontally(
+                                  //   itemsFilm: state.cartoon,
+                                  // ),
+                                  ItemGridAndTitle(
+                                    itemFilms: state.cartoon,
+                                    title: app?.cartoon ?? '',
+                                    slug: 'hoat-hinh',
                                   ),
+
 
                                   ///phim bộ
                                   ItemGridAndTitle(
@@ -363,9 +369,7 @@ AppBar _appBar(BuildContext context, ScrollController scrollController) {
                 duration: const Duration(milliseconds: 500),
                 curve: Curves.easeInOut);
           },
-          child: SvgPicture.asset(
-            'assets/icons/icon_app.svg', width: 40, height: 40,
-          ),
+          child: const Icon(Icons.movie_creation_outlined),
         ),
         GestureDetector(
           onTap: () {

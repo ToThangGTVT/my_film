@@ -25,69 +25,72 @@ class SettingsPage extends StatelessWidget {
       onWillPop: () async => false,
       child: Scaffold(
         appBar: HeaderApp(title: AppLocalizations.of(context)!.setting),
-        body: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              height: 60,
-              width: width,
-              // color: Colors.red,\
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      themeCubit.state.isDark
-                          ? SvgPicture.asset('assets/icons/moon.svg',
-                              color: theme.onPrimary)
-                          : SvgPicture.asset('assets/icons/sun.svg',
-                              color: theme.onPrimary),
-                      const SizedBox(
-                        width: AppSize.size10,
-                      ),
-                      Text(app!.darkMode),
-                    ],
-                  ),
-                  Switch(
-                    // This bool value toggles the switch.
-                    value: themeCubit.state.isDark,
-                    activeColor: Colors.red,
-                    onChanged: (bool value) {
-                      context.read<ThemeCubit>().toggedTheme();
-                    },
-                  )
-                ],
+        body: Container(
+          color: theme.primary,
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                height: 60,
+                width: width,
+                // color: Colors.red,\
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        themeCubit.state.isDark
+                            ? SvgPicture.asset('assets/icons/moon.svg',
+                            color: theme.onPrimary)
+                            : SvgPicture.asset('assets/icons/sun.svg',
+                            color: theme.onPrimary),
+                        const SizedBox(
+                          width: AppSize.size10,
+                        ),
+                        Text(app!.darkMode),
+                      ],
+                    ),
+                    Switch(
+                      // This bool value toggles the switch.
+                      value: themeCubit.state.isDark,
+                      activeColor: Colors.red,
+                      onChanged: (bool value) {
+                        context.read<ThemeCubit>().toggedTheme();
+                      },
+                    )
+                  ],
+                ),
               ),
-            ),
-            ItemSetting(
-              path: 'assets/icons/global.svg',
-              text: app.language,
-              onTap: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const SelectLanguage()));
-              },
-            ),
-            ItemSetting(
-              path: 'assets/icons/bookmark.svg',
-              text: app.viewHistory,
-              onTap: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const ViewHistory()));
-              },
-            ),
-            ItemSetting(
-              path: 'assets/icons/trash.svg',
-              text: app.clearCache,
-              onTap: () {
-                _showMyDialog(context);
-              },
-            )
-          ],
-        ),
+              ItemSetting(
+                path: 'assets/icons/global.svg',
+                text: app.language,
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SelectLanguage()));
+                },
+              ),
+              ItemSetting(
+                path: 'assets/icons/bookmark.svg',
+                text: app.viewHistory,
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const ViewHistory()));
+                },
+              ),
+              ItemSetting(
+                path: 'assets/icons/trash.svg',
+                text: app.clearCache,
+                onTap: () {
+                  _showMyDialog(context);
+                },
+              )
+            ],
+          ),
+        )
       ),
     );
   }

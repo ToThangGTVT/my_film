@@ -33,7 +33,7 @@ class _SplashScreenState extends State<SplashScreen> {
     getData();
     localeCubit.checkIsSelectedLanguage();
 
-    Timer(const Duration(seconds: 3), () {
+    Timer(const Duration(seconds: 2), () {
       Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const MyHomeApp()),
@@ -62,18 +62,6 @@ class _SplashScreenState extends State<SplashScreen> {
                 height: 130,
               ),
             ),
-            const SizedBox(
-              height: 20,
-            ),
-            const Text(
-              'My Film',
-              style: TextStyle(
-                color: Color(0xFFcfaf30),
-                letterSpacing: 0.5,
-                fontSize: 70,
-                fontWeight: FontWeight.w600,
-              ),
-            )
           ],
         ),
       ),
