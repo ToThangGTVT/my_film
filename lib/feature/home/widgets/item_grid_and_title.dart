@@ -30,7 +30,7 @@ class ItemGridAndTitle extends StatefulWidget {
 
 class _ItemGridAndTitleState extends State<ItemGridAndTitle> {
   bool isDetail = false;
-  int itemCount = 9;
+  int itemCount = 12;
 
   @override
   Widget build(BuildContext context) {
@@ -80,13 +80,14 @@ class _ItemGridAndTitleState extends State<ItemGridAndTitle> {
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
-                      crossAxisSpacing: 10.0,
-                      mainAxisSpacing: 10.0,
-                      childAspectRatio: 0.6,
+                      crossAxisSpacing: 8.0,
+                      mainAxisSpacing: 8.0,
+                      childAspectRatio: 0.55,
                     ),
                     itemCount: itemCount, // Số lượng items trong grid view
                     itemBuilder: (context, index) {
                       return GestureDetector(
+                        behavior: HitTestBehavior.translucent,
                         onTap: () {
                           movieCubit.addToWatchHistory(
                               itemFilm: widget.itemFilms[index]);
@@ -98,6 +99,9 @@ class _ItemGridAndTitleState extends State<ItemGridAndTitle> {
                                           widget.itemFilms[index])));
                         },
                         child: Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+
                           children: [
                             Expanded(
                               child: ClipRRect(
@@ -109,7 +113,7 @@ class _ItemGridAndTitleState extends State<ItemGridAndTitle> {
                                     decoration: BoxDecoration(
                                       image: DecorationImage(
                                         image: imageProvider,
-                                        fit: BoxFit.cover,
+                                        fit: BoxFit.fill,
                                       ),
                                     ),
                                   ),
@@ -124,7 +128,7 @@ class _ItemGridAndTitleState extends State<ItemGridAndTitle> {
                             Container(
                               height: 40,
                               padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
+                                  const EdgeInsets.symmetric(horizontal: 4.0),
                               child: Text(
                                 context
                                             .watch<LocaleCubit>()
@@ -133,8 +137,9 @@ class _ItemGridAndTitleState extends State<ItemGridAndTitle> {
                                         'en'
                                     ? widget.itemFilms[index].origin_name
                                     : widget.itemFilms[index].name,
-                                textAlign: TextAlign.center,
+                                textAlign: TextAlign.start,
                                 overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 12),
                                 maxLines: 2,
                               ),
                             )
@@ -151,9 +156,9 @@ class _ItemGridAndTitleState extends State<ItemGridAndTitle> {
                       isDetail = !isDetail;
 
                       if (isDetail) {
-                        itemCount = 15;
+                        itemCount = 21;
                       } else {
-                        itemCount = 9;
+                        itemCount = 12;
                       }
                       setState(() {});
                     },

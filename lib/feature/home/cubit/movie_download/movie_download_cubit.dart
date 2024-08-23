@@ -26,6 +26,13 @@ class MovieDownloadCubit extends Cubit<MovieDownloadState> {
         errorCallback: errorCallback);
   }
 
+  Future<void> pause(String m3u8Url) async {
+    M3u8Downloader.pause(m3u8Url);
+    emit(state.copyWith(
+        status: MovieDownloadStatus.init
+    ));
+  }
+
   Future<void> initAsync() async {
     String saveDir = await _findSavePath();
     M3u8Downloader.initialize(
@@ -44,8 +51,30 @@ class MovieDownloadCubit extends Cubit<MovieDownloadState> {
     IsolateNameServer.registerPortWithName(
         _port.sendPort, 'downloader_send_port');
     _port.listen((dynamic data) {
+      if (data['status'] == 1) {
+        emit(state.copyWith(
+            progress: data['progress'],
+            status: MovieDownloadStatus.loading
+        ));
+        return;
+      }
+      if (data['status'] == 2) {
+        emit(state.copyWith(
+            progress: data['progress'],
+            status: MovieDownloadStatus.success
+        ));
+        return;
+      }
+      if (data['status'] == 3) {
+        emit(state.copyWith(
+            progress: data['progress'],
+            status: MovieDownloadStatus.error
+        ));
+        return;
+      }
       emit(state.copyWith(
-        progress: data['progress']
+        progress: data['progress'],
+        status: MovieDownloadStatus.loading
       ));
     });
   }
