@@ -2,16 +2,22 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../models/movie_information.dart';
+
+@immutable
 class ItemMovieInformation extends StatelessWidget {
-  const ItemMovieInformation({
+  ItemMovieInformation({
     super.key,
-    required this.imageUrl,
-    required this.name,
-    required this.year,
+    required this.movieInformation, required this.isThumb,
   });
-  final String imageUrl;
-  final String name;
-  final String year;
+  final MovieInformation movieInformation;
+  final bool isThumb;
+
+  late String imageUrl = isThumb ? movieInformation.thumb_url : movieInformation.poster_url;
+  late String name = movieInformation.name;
+  late String year = movieInformation.year.toString();
+  late String time = movieInformation.time;
+  late String quality = movieInformation.quality;
 
   @override
   Widget build(BuildContext context) {
@@ -20,28 +26,38 @@ class ItemMovieInformation extends StatelessWidget {
     final double height = MediaQuery.of(context).size.height;
     return Row(
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: SizedBox(
-            width: width * 0.4,
-            height: 100,
-            child: CachedNetworkImage(
-              imageUrl: imageUrl,
-              imageBuilder: (context, imageProvider) => Container(
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    image: imageProvider,
-                    fit: BoxFit.fill,
+        Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: SizedBox(
+                width: width * 0.4,
+                height: 100,
+                child: CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  imageBuilder: (context, imageProvider) => Container(
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: imageProvider,
+                        fit: BoxFit.fitHeight,
+                      ),
+                    ),
                   ),
+                  errorWidget: (context, url, error) => const Icon(Icons.warning),
                 ),
               ),
-              errorWidget: (context, url, error) => const Icon(Icons.warning),
             ),
-          ),
+            Padding(padding: const EdgeInsets.all(4), child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+                decoration: BoxDecoration(
+                    color: theme.onInverseSurface,
+                    borderRadius: BorderRadius.circular(8)),
+                child: Text(quality)),)
+          ],
         ),
-        SizedBox(
-          height: 100,
-          width: width * 0.6 - 32,
+        Expanded(
+          // height: 100,
+          // width: width * 0.6 - 32,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10.0),
             child: Column(
@@ -52,8 +68,15 @@ class ItemMovieInformation extends StatelessWidget {
                   name,
                   overflow: TextOverflow.ellipsis,
                   maxLines: 4,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 4,),
+                Text(
+                  time,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 4,
+                  style: TextStyle(color: theme.outline, fontSize: 14),
+                ),
+                const SizedBox(height: 4),
                 Container(
                     padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
                     decoration: BoxDecoration(

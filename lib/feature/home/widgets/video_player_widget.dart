@@ -5,8 +5,6 @@ import 'dart:ui';
 import 'package:app/component/loading_widget.dart';
 import 'package:app/config/app_size.dart';
 import 'package:app/config/print_color.dart';
-import 'package:app/feature/home/cubit/movie_download/movie_download_cubit.dart';
-import 'package:app/feature/home/cubit/movie_download/movie_download_state.dart';
 import 'package:app/feature/home/models/data_film.dart';
 import 'package:app/feature/home/models/movie_category.dart';
 import 'package:app/feature/home/models/movie_episodes.dart';
@@ -16,17 +14,15 @@ import 'package:flick_video_player/flick_video_player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:m3u8_downloader/m3u8_downloader.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
 
 import '../../../component/loading_circle.dart';
 import '../cubit/movie/movie_cubit.dart';
+import '../cubit/movie/movie_state.dart';
+import '../movie_list.dart';
+
 // ignore: must_be_immutable
 class VideoPlayerWidget extends StatefulWidget {
   VideoPlayerWidget(
@@ -34,6 +30,7 @@ class VideoPlayerWidget extends StatefulWidget {
       required this.url,
       required this.dataFilm,
       required this.movieInformation});
+
   final String url;
   final DataFilm? dataFilm;
   MovieInformation? movieInformation;
@@ -49,8 +46,6 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   List<String> items = [];
   List<String> beginningOfContent = [];
   String summaryContent = '';
-  final ReceivePort _port = ReceivePort();
-  late final MovieDownloadCubit movieDownloadCubit;
   var isInit = false;
 
   void splitContent() {
@@ -104,190 +99,124 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     final double height = MediaQuery.of(context).size.height;
     final theme = Theme.of(context);
     final MovieCubit movieCubit = context.read<MovieCubit>();
-    MovieDownloadCubit movieDownloadCubit = context.watch<MovieDownloadCubit>();
     final app = AppLocalizations.of(context);
-    if (isInit == false) {
-      movieDownloadCubit.initAsync();
-    }
-    isInit = true;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         VideoPlayer(height: height, flickManager: flickManager),
-        Expanded(child: Container(
-          color: theme.colorScheme.primary,
-          padding: const EdgeInsets.only(left: 10, right: 10, top: 0),
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Divider(),
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        localeCubit.state.languageCode == 'vi'
-                            ? widget.dataFilm!.movie.name
-                            : widget.dataFilm!.movie.origin_name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        if (widget.movieInformation!.isFavorite == false) {
-                          movieCubit.addMoviesToFavoritesList(
-                              itemFilm: widget.movieInformation);
-                        } else {
-                          movieCubit.removeMoviesToFavoritesList(
-                              itemFilm: widget.movieInformation);
-                        }
-                        setState(() {
-                          widget.movieInformation!.isFavorite =
-                          !widget.movieInformation!.isFavorite;
-                        });
-                      },
-                      child: Icon(
-                        Icons.favorite_rounded,
-                        size: AppSize.size28,
-                        color: widget.movieInformation!.isFavorite
-                            ? theme.colorScheme.onPrimary
-                            : theme.colorScheme.tertiary,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    BlocBuilder<MovieDownloadCubit, MovieDownloadState>(
-                      builder: (BuildContext context, MovieDownloadState state) {
-                        IconData iconData;
-                        switch (state.status) {
-                          case MovieDownloadStatus.init:
-                            iconData = Icons.arrow_downward_rounded;
-                            break;
-                          case MovieDownloadStatus.loading:
-                            iconData = Icons.pause_rounded;
-                            break;
-                          case MovieDownloadStatus.success:
-                            iconData = Icons.check_rounded;
-                            break;
-                          case MovieDownloadStatus.error:
-                            iconData = Icons.error_rounded;
-                            break;
-                          default:
-                            iconData = Icons.arrow_downward_rounded;
-                        }
-
-                        return Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Padding(padding: const EdgeInsets.all(2), child: SizedBox.square(
-                                dimension: 40,
-                                child: CircularProgressIndicator(
-                                  value: state.progress,
-                                  color: theme.colorScheme.tertiary,
-                                  strokeWidth: 2.0,
-                                ),
-                              ),),
-                              GestureDetector(
-                                onTap: () {
-                                  _checkPermission().then((hasGranted) async {
-                                    if (hasGranted) {
-                                      await M3u8Downloader.config(
-                                        convertMp4: true,
-                                      );
-                                      switch (movieDownloadCubit.state.status) {
-                                        case MovieDownloadStatus.init:
-                                          movieDownloadCubit.download(widget.url, widget.dataFilm?.movie.origin_name);
-                                          break;
-                                        case MovieDownloadStatus.loading:
-                                          movieDownloadCubit.pause(widget.url);
-                                          break;
-                                        case MovieDownloadStatus.success:
-                                          break;
-                                        case MovieDownloadStatus.error:
-                                          break;
-                                      }
-                                    }
-                                  });
-                                },
-                                child: Icon(
-                                  iconData,
-                                  size: AppSize.size22,
-                                  color: widget.movieInformation!.isFavorite
-                                      ? theme.colorScheme.onPrimary
-                                      : theme.colorScheme.tertiary,
-                                ),
-                              )]
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                const Divider(),
-                const SizedBox(
-                  height: 6,
-                ),
-                widget.dataFilm!.episodes[0].server_data.length == 1
-                    ? const SizedBox()
-                    : EpisodeNumberOfTheMovie(
-                  flickManager: flickManager,
-                  items: widget.dataFilm!.episodes,
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                TitleAndContent(
-                    title: AppLocalizations.of(context)!.content,
-                    content: isHidden
-                        ? summaryContent
-                        : widget.dataFilm!.movie.content),
-                const SizedBox(
-                  height: 5,
-                ),
-                isCheckHidden
-                    ? const SizedBox()
-                    : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          isHidden = !isHidden;
-                        });
-                      },
-                      child: Container(
-                        alignment: Alignment.center,
-                        width: MediaQuery.of(context).size.width * 0.25,
-                        height: 20,
-                        decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(0)),
+        Expanded(
+          child: Container(
+            color: theme.colorScheme.primary,
+            padding: const EdgeInsets.only(left: 10, right: 10, top: 0),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(),
+                  Row(
+                    children: [
+                      Flexible(
                         child: Text(
-                          isHidden ? app!.seeMore : app!.hideLess,
-                          style: TextStyle(
-                              color: theme.colorScheme.primary,
-                              fontSize: AppSize.size11),
+                          localeCubit.state.languageCode == 'vi'
+                              ? widget.dataFilm!.movie.name
+                              : widget.dataFilm!.movie.origin_name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                       ),
-                    )
-                  ],
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                ContentActor(items: widget.dataFilm?.movie.actor ?? []),
-                const SizedBox(
-                  height: 10,
-                ),
-                ContentCategory(items: widget.dataFilm!.movie.category),
-                const SizedBox(
-                  height: 20,
-                ),
-              ],
+                      GestureDetector(
+                        onTap: () {
+                          if (widget.movieInformation!.isFavorite == false) {
+                            movieCubit.addMoviesToFavoritesList(
+                                itemFilm: widget.movieInformation);
+                          } else {
+                            movieCubit.removeMoviesToFavoritesList(
+                                itemFilm: widget.movieInformation);
+                          }
+                          setState(() {
+                            widget.movieInformation!.isFavorite =
+                                !widget.movieInformation!.isFavorite;
+                          });
+                        },
+                        child: Icon(
+                          Icons.favorite_rounded,
+                          size: AppSize.size28,
+                          color: widget.movieInformation!.isFavorite
+                              ? theme.colorScheme.onPrimary
+                              : theme.colorScheme.tertiary,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                  ),
+                  const Divider(),
+                  const SizedBox(
+                    height: 6,
+                  ),
+                  widget.dataFilm!.episodes[0].server_data.length == 1
+                      ? const SizedBox()
+                      : EpisodeNumberOfTheMovie(
+                          flickManager: flickManager,
+                          items: widget.dataFilm!.episodes,
+                        ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  TitleAndContent(
+                      title: AppLocalizations.of(context)!.content,
+                      content: isHidden
+                          ? summaryContent
+                          : widget.dataFilm!.movie.content),
+                  const SizedBox(
+                    height: 5,
+                  ),
+                  isCheckHidden
+                      ? const SizedBox()
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  isHidden = !isHidden;
+                                });
+                              },
+                              child: Container(
+                                alignment: Alignment.center,
+                                width: MediaQuery.of(context).size.width * 0.25,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                    color: Colors.grey,
+                                    borderRadius: BorderRadius.circular(0)),
+                                child: Text(
+                                  isHidden ? app!.seeMore : app!.hideLess,
+                                  style: TextStyle(
+                                      color: theme.colorScheme.primary,
+                                      fontSize: AppSize.size11),
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  ContentActor(items: widget.dataFilm?.movie.actor ?? []),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  ContentCategory(items: widget.dataFilm!.movie.category),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),)
+        )
       ],
     );
   }
@@ -311,7 +240,9 @@ class VideoPlayer extends StatelessWidget {
         flickManager: flickManager,
         flickVideoWithControls: FlickVideoWithControls(
           aspectRatioWhenLoading: 16 / 9,
-          videoFit: orientation == Orientation.portrait ? BoxFit.fitHeight : BoxFit.fitWidth,
+          videoFit: orientation == Orientation.portrait
+              ? BoxFit.fitHeight
+              : BoxFit.fitWidth,
           controls: FlickPortraitControls(
             iconSize: 30,
             progressBarSettings: FlickProgressBarSettings(
@@ -390,7 +321,10 @@ class _EpisodeNumberOfTheMovieState extends State<EpisodeNumberOfTheMovie> {
                 borderRadius: BorderRadius.circular(0),
                 color: indexSelected == index ? Colors.red : Colors.grey,
               ),
-              child: Text('${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold),),
+              child: Text(
+                '${index + 1}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ),
@@ -419,16 +353,10 @@ class ContentActor extends StatelessWidget {
           height: 10,
         ),
         Wrap(
-          spacing: 8.0, // Khoảng cách giữa các widget con
-          runSpacing: 8.0, // Khoảng cách giữa các dòng
-          alignment: WrapAlignment.center, // Căn giữa theo chiều ngang
-          children: List.generate(
-              items.length,
-              (index) => Container(
-                  alignment: Alignment.center,
-                  width: handleWidthActor(items, context),
-                  child: Text(items[index]))),
-        )
+            spacing: 8.0, // Khoảng cách giữa các widget con
+            runSpacing: 0.1, // Khoảng cách giữa các dòng
+            children: List.generate(
+                items.length, (index) => Chip(label: Text(items[index]))))
       ],
     );
   }
@@ -454,15 +382,38 @@ class ContentCategory extends StatelessWidget {
           height: 10,
         ),
         Wrap(
-          spacing: 8.0, // Khoảng cách giữa các widget con
-          runSpacing: 8.0, // Khoảng cách giữa các dòng
-          alignment: WrapAlignment.center, // Căn giữa theo chiều ngang
+          spacing: 8.0,
+          runSpacing: 8.0,
           children: List.generate(
-              items.length,
-              (index) => Container(
-                  alignment: Alignment.center,
-                  width: handleWidthCategory(items, context),
-                  child: Text(items[index].name))),
+            items.length,
+            (index) => InputChip(
+              backgroundColor: Colors.blue,
+              label: Text(
+                items[index].name,
+                style: TextStyle(color: Colors.white),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) {
+                      var movieCubit = context.read<MovieCubit>();
+                      movieCubit.getTheListOfCategory(items[index].slug, 0);
+                      return BlocBuilder<MovieCubit, MovieState>(
+                          builder: (context, state) {
+                        return MovieList(
+                          itemFilms: state.categoryMovies,
+                          title: 'Thể loại ${items[index].name}',
+                          slug: 'the-loai',
+                          category: items[index].slug,
+                        );
+                      });
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
         )
       ],
     );
@@ -471,6 +422,7 @@ class ContentCategory extends StatelessWidget {
 
 class TitleAndContent extends StatelessWidget {
   const TitleAndContent({super.key, this.title = '', this.content = ''});
+
   final String title;
   final String content;
 

@@ -17,6 +17,7 @@ class MovieCubit extends Cubit<MovieState> {
   List<MovieInformation> newSingleMovie = [];
   List<MovieInformation> newSeriesMovies = [];
   List<MovieInformation> newCartoons = [];
+  List<MovieInformation> newCategories = [];
 
   final translator = GoogleTranslator();
 
@@ -137,6 +138,34 @@ class MovieCubit extends Cubit<MovieState> {
     }
     emit(state.copyWith(
       seriesMovies: newSeriesMovies,
+      status: MovieStatus.success,
+    ));
+  }
+
+  Future<void> getTheListOfCategory(String category, int page) async {
+    emit(state.copyWith(status: MovieStatus.loading));
+
+    final data = await FetchApiMovie.getTheListOfCategory(category, page);
+
+    List items = data['data']['items'];
+    for (var i = 0; i < items.length; i++) {
+      final MovieInformation item;
+      item = MovieInformation.fromJson(items[i]);
+      item.poster_url = 'https://img.phimapi.com/${item.poster_url}';
+      item.thumb_url = 'https://img.phimapi.com/${item.thumb_url}';
+      newCategories.add(item);
+    }
+    if (state.favoriteMovies.isNotEmpty && newCategories.isNotEmpty) {
+      for (int i = 0; i < newCategories.length; i++) {
+        for (int j = 0; j < state.favoriteMovies.length; j++) {
+          if (newCategories[i].slug == state.favoriteMovies[j]!.slug) {
+            newCategories[i].isFavorite = true;
+          }
+        }
+      }
+    }
+    emit(state.copyWith(
+      categoryMovies: newCategories,
       status: MovieStatus.success,
     ));
   }

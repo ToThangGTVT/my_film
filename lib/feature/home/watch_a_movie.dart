@@ -2,11 +2,10 @@ import 'package:app/component/loading_widget.dart';
 import 'package:app/feature/home/models/movie_information.dart';
 import 'package:app/feature/home/widgets/video_player_widget.dart';
 import 'package:app/l10n/cubit/locale_cubit.dart';
+import 'package:cherry_toast/cherry_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 import 'cubit/movie/movie_cubit.dart';
 import 'cubit/movie/movie_state.dart';
@@ -89,15 +88,12 @@ class _WatchAMovieState extends State<WatchAMovie> {
                       )
                     : WillPopScope(
                         onWillPop: () async {
-                          Fluttertoast.showToast(
-                              msg: AppLocalizations.of(context)!
-                                  .pressTheButtonToExit,
-                              toastLength: Toast.LENGTH_SHORT,
-                              gravity: ToastGravity.SNACKBAR,
-                              timeInSecForIosWeb: 1,
-                              backgroundColor: Colors.grey,
-                              textColor: Colors.red,
-                              fontSize: 16.0);
+                          CherryToast.info(
+                              title:  Text("Tips", style: TextStyle(color: Colors.black)),
+                          action: Text(AppLocalizations.of(context)?.pressTheButtonToExit ?? "", style: TextStyle(color: Colors.black)),
+                          actionHandler: (){
+
+                          });
                           return false;
                         },
                         child: SafeArea(

@@ -62,25 +62,23 @@ class _SearchMovieState extends State<SearchMovie> {
                         children: [
                           Expanded(
                             child: TextField(
+                              onSubmitted: (data) async {
+                                if (searchController.text.trim().isNotEmpty) {
+                                  setState(() {
+                                    isPlaySearch = true;
+                                  });
+                                  FocusScope.of(context).unfocus();
+                                  await movieCubit.moviesSearch(
+                                      searchController.text.trim());
+                                  isPlaySearch = false;
+                                  isFirst = false;
+
+                                  setState(() {});
+                                }
+                              },
                               cursorColor: theme.colorScheme.onPrimary,
                               autofocus: true,
                               controller: searchController,
-                              onChanged: (value) {
-                                debounce.call(() async {
-                                  if (searchController.text.trim().isNotEmpty) {
-                                    setState(() {
-                                      isPlaySearch = true;
-                                    });
-                                    FocusScope.of(context).unfocus();
-                                    await movieCubit.moviesSearch(
-                                        searchController.text.trim());
-                                    isPlaySearch = false;
-                                    isFirst = false;
-
-                                    setState(() {});
-                                  }
-                                });
-                              },
                               decoration: InputDecoration(
                                 suffixIcon: GestureDetector(
                                     onTap: () async {
@@ -102,7 +100,7 @@ class _SearchMovieState extends State<SearchMovie> {
                                     child: Icon(Icons.search,
                                         color: theme.colorScheme.tertiary)),
                                 contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 10),
+                                    horizontal: 8, vertical: 4),
                                 fillColor: theme.colorScheme.tertiary,
                                 hintText: AppLocalizations.of(context)!.search,
                                 focusedBorder: OutlineInputBorder(
@@ -132,7 +130,7 @@ class _SearchMovieState extends State<SearchMovie> {
                                 FocusScope.of(context).unfocus();
                                 Navigator.pop(context);
                               },
-                              child: Text(AppLocalizations.of(context)!.cancel))
+                              child: Text(AppLocalizations.of(context)!.cancel, style: const TextStyle(fontSize: 16),))
                         ],
                       ),
                     ),
@@ -183,20 +181,7 @@ class _SearchMovieState extends State<SearchMovie> {
                                               movieInformation: state
                                                   .moviesSearch[index])));
                                 },
-                                child: ItemMovieInformation(
-                                  imageUrl:
-                                  state.moviesSearch[index].poster_url,
-                                  name: context
-                                      .watch<LocaleCubit>()
-                                      .state
-                                      .languageCode ==
-                                      'en'
-                                      ? state
-                                      .moviesSearch[index].origin_name
-                                      : state.moviesSearch[index].name,
-                                  year: state.moviesSearch[index].year
-                                      .toString(),
-                                ),
+                                child: ItemMovieInformation(movieInformation: state.moviesSearch[index], isThumb: true,),
                               ),
                             );
                           },

@@ -396,7 +396,7 @@ AppBar _appBar(BuildContext context, ScrollController scrollController) {
                 Text(
                   app?.search ?? '',
                   style: TextStyle(
-                      fontSize: AppSize.size13,
+                      fontSize: AppSize.size14,
                       fontWeight: FontWeight.w200,
                       color: theme.colorScheme.tertiary),
                 ),

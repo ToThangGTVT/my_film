@@ -1,13 +1,10 @@
-import 'package:app/feature/home/cubit/movie_download/movie_download_cubit.dart';
 import 'package:app/feature/splash/splash_screen.dart';
 import 'package:app/l10n/cubit/locale_cubit.dart';
 import 'package:app/local_storage/local_storage.dart';
 import 'package:app/theme/cubit/theme_cubit.dart';
 import 'package:app/theme/dark_theme.dart';
 import 'package:app/theme/light_theme.dart';
-// import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -43,9 +40,6 @@ void main() async {
         ),
         BlocProvider(
           create: (context) => MovieCubit(),
-        ),
-        BlocProvider(
-          create: (context) => MovieDownloadCubit(),
         ),
       ],
       child: const MyApp(),

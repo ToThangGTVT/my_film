@@ -48,28 +48,17 @@ class _MyHomeAppState extends State<MyHomeApp> {
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined, color: theme.colorScheme.tertiary),
               label: app?.home,
-              activeIcon: Icon(Icons.home_outlined, color: theme.colorScheme.onPrimary),
+              activeIcon: Icon(Icons.home_rounded, color: theme.colorScheme.onPrimary),
             ),
-            // BottomNavigationBarItem(
-            //   icon: SvgPicture.asset(
-            //     'assets/icons/search.svg',
-            //     color: theme.colorScheme.tertiary,
-            //   ),
-            //   label: app?.search,
-            //   activeIcon: SvgPicture.asset(
-            //     'assets/icons/search.svg',
-            //     color: theme.colorScheme.onPrimary,
-            //   ),
-            // ),
             BottomNavigationBarItem(
               icon: Icon(Icons.favorite_border, color: theme.colorScheme.tertiary),
               label: app?.favorite,
-              activeIcon: Icon(Icons.favorite_border, color: theme.colorScheme.onPrimary),
+              activeIcon: Icon(Icons.favorite_rounded, color: theme.colorScheme.onPrimary),
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.settings_outlined, color: theme.colorScheme.tertiary),
               label: app?.setting,
-              activeIcon: Icon(Icons.settings_outlined, color: theme.colorScheme.tertiary),
+              activeIcon: Icon(Icons.settings_outlined, color: theme.colorScheme.onPrimary),
             ),
           ],
         ),

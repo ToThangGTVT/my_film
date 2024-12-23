@@ -12,17 +12,17 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'cubit/movie/movie_cubit.dart';
 import 'cubit/movie/movie_state.dart';
 
-
-
 class MovieList extends StatefulWidget {
   const MovieList(
       {super.key,
       this.title = '',
+      this.category = '',
       required this.slug,
       required this.itemFilms});
   final String title;
   final String slug;
   final List<MovieInformation> itemFilms;
+  final String category;
 
   @override
   _MovieListState createState() => _MovieListState();
@@ -34,6 +34,8 @@ class _MovieListState extends State<MovieList> {
   late ScrollController controller;
   var isLoading = true;
   Timer? _debounce;
+
+  String get category => widget.category;
 
   @override
   void initState() {
@@ -72,6 +74,9 @@ class _MovieListState extends State<MovieList> {
           break;
         case 'phim-bo':
           movieCubit.getTheListOfMoviesAndSeries(++page);
+          break;
+        case 'the-loai':
+          movieCubit.getTheListOfCategory(category, ++page);
           break;
         default:
           break;
@@ -125,11 +130,7 @@ class _MovieListState extends State<MovieList> {
                                 ),
                               );
                             },
-                            child: ItemMovieInformation(
-                              imageUrl: listFilm[index].thumb_url,
-                              name: listFilm[index].name,
-                              year: listFilm[index].year.toString(),
-                            ),
+                            child: ItemMovieInformation(movieInformation: listFilm[index], isThumb: true,),
                           );
                         },
                         separatorBuilder: (context, index) => const SizedBox(

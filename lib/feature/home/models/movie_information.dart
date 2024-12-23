@@ -21,6 +21,10 @@ class MovieInformation {
   final int year;
   @HiveField(6)
   bool isFavorite;
+  @HiveField(7)
+  String time;
+  @HiveField(8)
+  String quality;
 
   MovieInformation(
       {this.name = '',
@@ -29,7 +33,10 @@ class MovieInformation {
       this.poster_url = '',
       this.thumb_url = ' ',
       this.year = 2020,
-      this.isFavorite = false});
+      this.isFavorite = false,
+        this.time = '',
+        this.quality = ''
+      });
 
   factory MovieInformation.fromJson(Map<String, dynamic> json) =>
       _$MovieInformationFromJson(json);

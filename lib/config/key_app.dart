@@ -12,6 +12,7 @@ class KeyApp {
   static const String SERIES_MOVIES = '/v1/api/danh-sach/phim-bo';
   static const String CARTOON = '/v1/api/danh-sach/hoat-hinh';
   static const String MOVIES_SEARCH = '/v1/api/tim-kiem';
+  static const String CATEGORIES = '/v1/api/the-loai';
 
   /// local storage
   static const String FAVORITE_MOVIE_BOX = 'favorite_Movie_Box';

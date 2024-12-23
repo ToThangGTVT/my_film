@@ -8,6 +8,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../home/cubit/movie/movie_cubit.dart';
 import '../home/cubit/movie/movie_state.dart';
+import '../home/models/movie_information.dart';
 
 class ViewHistory extends StatelessWidget {
   const ViewHistory({super.key});
@@ -53,13 +54,7 @@ class ViewHistory extends StatelessWidget {
                                     ),
                                   );
                                 },
-                                child: ItemMovieInformation(
-                                  imageUrl:
-                                      state.viewHistory[index]!.poster_url,
-                                  name: state.viewHistory[index]!.name,
-                                  year:
-                                      state.viewHistory[index]!.year.toString(),
-                                )),
+                                child: ItemMovieInformation(movieInformation: state.viewHistory[index] ?? MovieInformation(), isThumb: true,)),
                           );
                         },
                       ),

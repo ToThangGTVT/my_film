@@ -161,6 +161,44 @@ class FetchApiMovie {
     return result;
   }
 
+  static Future<Map<String, dynamic>> getTheListOfCategory(String category, int page) async {
+    var path = "${KeyApp.CATEGORIES}/$category";
+    var uri = Uri.https(KeyApp.Base_URL, path, {'limit': '${KeyApp.MAX_SIZE}', 'page': '$page'});
+    _logUri(uri);
+    Map<String, dynamic> result = {};
+    try {
+      final response = await http.get(uri);
+      _logResponse(response);
+
+      switch (response.statusCode) {
+        case 200:
+          var data = jsonDecode(response.body);
+          result = data;
+          break;
+        case 400:
+          var data = jsonDecode(response.body);
+          result = data;
+          break;
+        case 401:
+          var data = jsonDecode(response.body);
+          result = data;
+          break;
+        case 404:
+          var data = jsonDecode(response.body);
+          result = data;
+          break;
+        default:
+          var data = jsonDecode(response.body);
+          result = data;
+      }
+
+      return result;
+    } catch (e) {
+      printRed(e.toString());
+    }
+    return result;
+  }
+
   static Future<Map<String, dynamic>> getTheListOfCartoons(int page) async {
     var uri = Uri.https(KeyApp.Base_URL, KeyApp.CARTOON, {'limit': '${KeyApp.MAX_SIZE}', 'page': '$page'});
     _logUri(uri);
