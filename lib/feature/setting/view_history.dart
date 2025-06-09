@@ -4,8 +4,8 @@ import 'package:app/feature/home/watch_a_movie.dart';
 import 'package:app/feature/home/widgets/item_movie_information.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../home/cubit/movie/movie_cubit.dart';
 import '../home/cubit/movie/movie_state.dart';
 import '../home/models/movie_information.dart';

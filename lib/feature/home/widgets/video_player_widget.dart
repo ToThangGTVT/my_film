@@ -16,9 +16,9 @@ import 'package:flutter/painting.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../../component/loading_circle.dart';
+import '../../../l10n/app_localizations.dart';
 import '../cubit/movie/movie_cubit.dart';
 import '../cubit/movie/movie_state.dart';
 import '../movie_list.dart';

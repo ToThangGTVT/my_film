@@ -4,9 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../component/button.dart';
 import '../../component/flag.dart';
 import '../../config/print_color.dart';
+import '../../l10n/app_localizations.dart';
 import '../../l10n/cubit/locale_cubit.dart';
 import '../../l10n/cubit/locale_state.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SelectLanguage extends StatefulWidget {
   const SelectLanguage({super.key});

@@ -7,9 +7,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../cubit/movie/movie_cubit.dart';
 
 // ignore: must_be_immutable

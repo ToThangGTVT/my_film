@@ -3,7 +3,8 @@ import 'package:app/feature/home/home_page.dart';
 import 'package:app/feature/setting/setting_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+import 'l10n/app_localizations.dart';
 
 class MyHomeApp extends StatefulWidget {
   const MyHomeApp({super.key});
