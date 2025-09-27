@@ -1,23 +1,37 @@
+// lib/feature/home/network/fetch_api_movie.dart
 import 'dart:convert';
 import 'package:app/config/key_app.dart';
 import 'package:app/config/print_color.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:app/feature/home/network/api_cache.dart';
 
 class FetchApiMovie {
   FetchApiMovie._();
 
-  // ========= PUBLIC APIS (giữ nguyên chữ ký) =========
+  // Tinh chỉnh TTL cho từng endpoint nếu muốn
+  static const Duration _defaultMaxAge = Duration(minutes: 10);
+  static const Duration _detailsMaxAge = Duration(minutes: 30);
+
+  static Map<String, String> get _defaultHeaders => const {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json; charset=utf-8',
+    'Connection': 'keep-alive',
+    'Accept-Encoding': 'gzip',
+    'User-Agent': 'app/1.0 (Flutter; dart:io)',
+  };
+
+  /* =================== Public APIs (y như cũ) =================== */
 
   static Future<Map<String, dynamic>> getMovies(int page) async {
-    final safePage = page < 1 ? 1 : page;
-    final uri = Uri.https(KeyApp.Base_URL, KeyApp.NEW_UPDATE_MOVIES, {'page': '$safePage'});
-    return _getJson(uri);
+    final p = page < 1 ? 1 : page;
+    final uri = Uri.https(KeyApp.Base_URL, KeyApp.NEW_UPDATE_MOVIES, {'page': '$p'});
+    return _getJsonCached(uri, maxAge: _defaultMaxAge);
   }
 
   static Future<Map<String, dynamic>> getMovieDetails(String slug) async {
     final uri = Uri.https(KeyApp.Base_URL, '/phim/$slug');
-    return _getJson(uri);
+    return _getJsonCached(uri, maxAge: _detailsMaxAge);
   }
 
   static Future<Map<String, dynamic>> getAListOfIndividualMovies(int page) async {
@@ -26,7 +40,7 @@ class FetchApiMovie {
       KeyApp.SINGLE_MOVIES,
       {'limit': '${KeyApp.MAX_SIZE}', 'page': '$page'},
     );
-    return _getJson(uri);
+    return _getJsonCached(uri, maxAge: _defaultMaxAge);
   }
 
   static Future<Map<String, dynamic>> getTheListOfMoviesAndSeries(int page) async {
@@ -35,7 +49,7 @@ class FetchApiMovie {
       KeyApp.SERIES_MOVIES,
       {'limit': '${KeyApp.MAX_SIZE}', 'page': '$page'},
     );
-    return _getJson(uri);
+    return _getJsonCached(uri, maxAge: _defaultMaxAge);
   }
 
   static Future<Map<String, dynamic>> getTheListOfCategory(String category, int page) async {
@@ -45,7 +59,7 @@ class FetchApiMovie {
       path,
       {'limit': '${KeyApp.MAX_SIZE}', 'page': '$page'},
     );
-    return _getJson(uri);
+    return _getJsonCached(uri, maxAge: _defaultMaxAge);
   }
 
   static Future<Map<String, dynamic>> getTheListOfCartoons(int page) async {
@@ -54,7 +68,7 @@ class FetchApiMovie {
       KeyApp.CARTOON,
       {'limit': '${KeyApp.MAX_SIZE}', 'page': '$page'},
     );
-    return _getJson(uri);
+    return _getJsonCached(uri, maxAge: _defaultMaxAge);
   }
 
   static Future<Map<String, dynamic>> movieSearch(String keyWord) async {
@@ -63,55 +77,97 @@ class FetchApiMovie {
       KeyApp.MOVIES_SEARCH,
       {'keyword': keyWord, 'limit': '10'},
     );
-    return _getJson(uri);
+    // Search thường muốn dữ liệu mới → giảm TTL
+    return _getJsonCached(uri, maxAge: const Duration(minutes: 2));
   }
 
-  // ========= CORE HTTP + BACKGROUND PARSE =========
+  /* =================== Core (Cache + Conditional) =================== */
 
-  static Future<Map<String, dynamic>> _getJson(Uri uri) async {
+  static Future<Map<String, dynamic>> _getJsonCached(
+      Uri uri, {
+        Duration maxAge = const Duration(minutes: 10),
+      }) async {
+    await ApiCache.ensureOpen();
+
+    // 1) Nếu có cache tươi → trả ngay
+    final cached = await ApiCache.read(uri);
+    if (cached != null && ApiCache.isFresh(cached, maxAge)) {
+      if (kDebugMode) print('🟢 [CACHE] $uri');
+      return compute(_parseJsonToMap, cached.body);
+    }
+
+    // 2) Conditional request nếu có etag/lastModified
+    final headers = {..._defaultHeaders};
+    if (cached?.etag?.isNotEmpty == true) {
+      headers['If-None-Match'] = cached!.etag!;
+    }
+    if (cached?.lastModified?.isNotEmpty == true) {
+      headers['If-Modified-Since'] = cached!.lastModified!;
+    }
+
     _logUri(uri);
 
+    http.Response res;
     try {
-      final res = await http
-          .get(uri, headers: _defaultHeaders)
-          .timeout(const Duration(seconds: 20));
-
-      _logResponse(res);
-
-      if (res.statusCode < 200 || res.statusCode >= 300) {
-        printRed('HTTP ${res.statusCode} for $uri');
-        return const {};
-      }
-
-      // Parse JSON ở background isolate → trả kết quả về main
-      final map = await compute(_parseJsonToMap, res.body);
-      return map;
-    } catch (e, st) {
+      res = await http.get(uri, headers: headers).timeout(const Duration(seconds: 20));
+    } catch (e) {
       printRed('Fetch error for $uri: $e');
-      if (kDebugMode) {
-        // In dev: log thêm stacktrace cho dễ debug
-        // ignore: avoid_print
-        print(st);
+      // Nếu lỗi mạng và có cache cũ → trả cache cũ (dù hết hạn) để không blank UI
+      if (cached != null) {
+        if (kDebugMode) print('🟠 [STALE-CACHE] $uri');
+        return compute(_parseJsonToMap, cached.body);
       }
       return const {};
     }
+
+    _logResponseLite(res);
+
+    // 3) 304 → dùng lại cache
+    if (res.statusCode == 304 && cached != null) {
+      if (kDebugMode) print('🔵 [304] Not Modified $uri');
+      // Cập nhật savedAt để “tươi” lại
+      await ApiCache.write(
+        uri,
+        ApiCacheItem(
+          body: cached.body,
+          etag: cached.etag,
+          lastModified: cached.lastModified,
+          savedAt: DateTime.now(),
+        ),
+      );
+      return compute(_parseJsonToMap, cached.body);
+    }
+
+    // 4) 200 → lưu body mới + etag/lastModified nếu có
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      final newEtag = res.headers['etag'];
+      final newLast = res.headers['last-modified'];
+
+      final item = ApiCacheItem(
+        body: res.body,
+        etag: newEtag,
+        lastModified: newLast,
+        savedAt: DateTime.now(),
+      );
+      await ApiCache.write(uri, item);
+
+      return compute(_parseJsonToMap, res.body);
+    }
+
+    // 5) Lỗi HTTP khác → fallback cache nếu có
+    printRed('HTTP ${res.statusCode} for $uri');
+    if (cached != null) {
+      if (kDebugMode) print('🟠 [FALLBACK-CACHE] $uri');
+      return compute(_parseJsonToMap, cached.body);
+    }
+    return const {};
   }
 
-  // Hàm top-level để compute() có thể gọi (bắt buộc top-level/static)
   static Map<String, dynamic> _parseJsonToMap(String body) {
     final decoded = jsonDecode(body);
-    // đảm bảo trả về Map<String, dynamic>
     if (decoded is Map<String, dynamic>) return decoded;
-    // một số API có thể trả mảng ở root → bọc lại
     return {'data': decoded};
   }
-
-  // ========= LOG & HEADERS =========
-
-  static Map<String, String> get _defaultHeaders => <String, String>{
-    'Accept': 'application/json',
-    'Content-Type': 'application/json; charset=utf-8',
-  };
 
   static void _logUri(Uri uri) {
     if (kDebugMode) {
@@ -120,12 +176,12 @@ class FetchApiMovie {
     }
   }
 
-  static void _logResponse(http.Response response) {
+  static void _logResponseLite(http.Response response) {
     if (kDebugMode) {
+      final body = response.body;
+      final preview = body.length > 200 ? '${body.substring(0, 200)}...' : body;
       // ignore: avoid_print
-      print('⬅️ ${response.request?.url} — ${response.statusCode}');
-      // ignore: avoid_print
-      print('Body: ${response.body}');
+      print('⬅️ ${response.statusCode} ${response.request?.url}\n$preview');
     }
   }
 }
