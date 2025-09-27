@@ -145,12 +145,6 @@ class _ItemGridAndTitleState extends State<ItemGridAndTitle> {
                                   CachedNetworkImage(
                                     imageUrl: item.poster_url,
                                     fit: BoxFit.cover,
-                                    placeholder: (ctx, url) =>
-                                        Shimmer.fromColors(
-                                          baseColor: Colors.grey.shade300,
-                                          highlightColor: Colors.grey.shade100,
-                                          child: Container(color: Colors.grey),
-                                        ),
                                     errorWidget: (ctx, url, error) => Center(
                                       child: Icon(
                                         Icons.image_not_supported_outlined,

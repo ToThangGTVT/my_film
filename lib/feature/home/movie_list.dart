@@ -256,10 +256,7 @@ class _MovieRowCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: theme.colorScheme.outline.withOpacity(0.18)),
         ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: child,
-        ),
+        child: child,
       ),
     );
   }
