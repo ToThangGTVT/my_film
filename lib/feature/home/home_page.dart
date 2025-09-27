@@ -112,10 +112,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> initialization() async {
-    movieCubit.getMovie(1);
-    movieCubit.getAListOfIndividualMovies(1);
-    movieCubit.getTheListOfMoviesAndSeries(1);
-    movieCubit.getTheListOfCartoons(1);
+    try {
+      await movieCubit.getMovie(1);
+      await movieCubit.getAListOfIndividualMovies(1);
+      await movieCubit.getTheListOfMoviesAndSeries(1);
+      await movieCubit.getTheListOfCartoons(1);
+    } catch (e) {
+      debugPrint("Init error: $e");
+    }
   }
 
   final ScrollController _scrollController = ScrollController();
@@ -297,7 +301,7 @@ class _HeroSlider extends StatelessWidget {
               itemBuilder: (context, i, _) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: _HeroCard(
-                  imageUrl: state.movies[i].poster_url,
+                  imageUrl: state.movies[i].thumb_url,
                   title: state.movies[i].name ?? '',
                   onTap: () {
                     movieCubit.addToWatchHistory(itemFilm: state.movies[i]);
@@ -315,7 +319,7 @@ class _HeroSlider extends StatelessWidget {
                 autoPlayCurve: Curves.easeInOutCubic,
                 enlargeCenterPage: true,
                 autoPlayInterval: const Duration(seconds: 6),
-                viewportFraction: 0.4,
+                viewportFraction: 0.8,
                 onPageChanged: (index, reason) => homePageCubit.setPageIndex(index),
                 aspectRatio: 9 / 16,
               ),
