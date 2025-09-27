@@ -30,95 +30,183 @@ class _WatchAMovieState extends State<WatchAMovie> {
     super.initState();
     movieCubit = context.read<MovieCubit>();
     localeCubit = context.read<LocaleCubit>();
+    _fetchDetailsAndPrepare();
+  }
 
-    movieCubit
-        .getMovieDetails(
-            widget.movieInformation!.slug, localeCubit.state.languageCode)
-        .then((value) => {
-              // actors = movieCubit.state.dataFilm!.movie.actor,
-              isLoading = false,
-              if (movieCubit.state.dataFilm != null)
-                {
-                  linkPlay = context
-                      .read<MovieCubit>()
-                      .state
-                      .dataFilm!
-                      .episodes[0]
-                      .server_data[0]
-                      .link_m3u8,
-                },
+  Future<void> _fetchDetailsAndPrepare() async {
+    // Thứ tự call API: gọi getMovieDetails trước, set linkPlay sau → rồi mới tắt loading
+    await movieCubit.getMovieDetails(
+      widget.movieInformation!.slug,
+      localeCubit.state.languageCode,
+    );
 
-              setState(
-                () {},
-              )
-            });
+    if (!mounted) return;
+    final dataFilm = movieCubit.state.dataFilm;
+
+    if (dataFilm != null) {
+      linkPlay = _pickFirstPlayableUrl();
+    }
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  String _pickFirstPlayableUrl() {
+    final dataFilm = movieCubit.state.dataFilm;
+    if (dataFilm == null) return '';
+
+    // Chọn link đầu tiên hợp lệ (phòng khi mảng rỗng/null)
+    for (final ep in dataFilm.episodes) {
+      for (final sd in ep.server_data) {
+        final url = sd.link_m3u8;
+        if ((url).toString().trim().isNotEmpty) {
+          return url;
+        }
+      }
+    }
+    return '';
+  }
+
+  void _showExitHint() {
+    CherryToast.info(
+      title: const Text("Tips", style: TextStyle(color: Colors.black)),
+      action: Text(
+        AppLocalizations.of(context)?.pressTheButtonToExit ?? "",
+        style: const TextStyle(color: Colors.black),
+      ),
+      actionHandler: () {},
+    ).show(context); // Quan trọng: phải .show(context)
+  }
+
+  Future<bool> _onWillPop() async {
+    _showExitHint();
+    return false; // chặn back vật lý, user bấm nút back trên UI để thoát
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return SafeArea(
       child: BlocBuilder<MovieCubit, MovieState>(
         builder: (context, state) {
-          // ignore: deprecated_member_use
-          return Scaffold(
-            body: isLoading
-                ? const Center(
-                    child: LoadingWidget(),
-                  )
-                : context.watch<MovieCubit>().state.dataFilm == null
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Center(
-                            child:
-                                Text(AppLocalizations.of(context)!.movieUpdate),
-                          ),
-                          const SizedBox(
-                            height: 20,
-                          ),
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.5,
-                            child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: Text(AppLocalizations.of(context)!.ok)),
-                          )
-                        ],
-                      )
-                    : WillPopScope(
-                        onWillPop: () async {
-                          CherryToast.info(
-                              title:  Text("Tips", style: TextStyle(color: Colors.black)),
-                          action: Text(AppLocalizations.of(context)?.pressTheButtonToExit ?? "", style: TextStyle(color: Colors.black)),
-                          actionHandler: (){
+          final dataFilm = state.dataFilm;
 
-                          });
-                          return false;
-                        },
-                        child: SafeArea(
-                          child: Stack(
-                            children: [
-                              VideoPlayerWidget(
-                                  movieInformation: widget.movieInformation,
-                                  url: linkPlay,
-                                  dataFilm: state.dataFilm),
-                              Positioned(
-                                left: 20,
-                                top: 20,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                  },
-                                  child: const Icon(Icons.arrow_back),
-                                ),
-                              )
+          return Scaffold(
+            backgroundColor: theme.colorScheme.primary,
+            body: isLoading
+                ? const Center(child: LoadingWidget())
+                : dataFilm == null
+                ? _movieUpdating(context)
+                : WillPopScope(
+              onWillPop: _onWillPop,
+              child: Stack(
+                children: [
+                  // Video player
+                  VideoPlayerWidget(
+                    movieInformation: widget.movieInformation,
+                    url: linkPlay,
+                    dataFilm: dataFilm,
+                  ),
+
+                  // Top gradient để icon back dễ đọc trên nền video
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: IgnorePointer(
+                      ignoring: true,
+                      child: Container(
+                        height: 100,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.6),
+                              Colors.transparent,
                             ],
                           ),
                         ),
                       ),
+                    ),
+                  ),
+
+                  // Back button
+                  Positioned(
+                    left: 16,
+                    top: 16,
+                    child: _BackButton(onTap: () {
+                      Navigator.pop(context);
+                    }),
+                  ),
+                ],
+              ),
+            ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _movieUpdating(BuildContext context) {
+    final app = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.live_tv_outlined, size: 64, color: theme.colorScheme.tertiary),
+            const SizedBox(height: 16),
+            Text(
+              app!.movieUpdate,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: theme.colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.5,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(app.ok),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BackButton extends StatelessWidget {
+  const _BackButton({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.35),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white.withOpacity(0.25)),
+          ),
+          child: const Padding(
+            padding: EdgeInsets.all(8),
+            child: Icon(Icons.arrow_back, color: Colors.white, size: 20),
+          ),
+        ),
       ),
     );
   }

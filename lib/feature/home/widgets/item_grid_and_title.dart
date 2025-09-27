@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:app/config/app_size.dart';
 import 'package:app/feature/home/models/movie_information.dart';
 import 'package:app/feature/home/movie_list.dart';
@@ -20,6 +21,7 @@ class ItemGridAndTitle extends StatefulWidget {
     required this.title,
     required this.slug,
   });
+
   List<MovieInformation> itemFilms;
   final String title;
   final String slug;
@@ -30,151 +32,208 @@ class ItemGridAndTitle extends StatefulWidget {
 
 class _ItemGridAndTitleState extends State<ItemGridAndTitle> {
   bool isDetail = false;
-  int itemCount = 12;
+  int itemCount = 12; // giữ logic cũ: 12 -> 21 khi xem thêm
 
   @override
   Widget build(BuildContext context) {
-    final MovieCubit movieCubit = context.read<MovieCubit>();
+    final movieCubit = context.read<MovieCubit>();
     final theme = Theme.of(context);
     final app = AppLocalizations.of(context);
 
+    if (widget.itemFilms.isEmpty) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
+
+    final isEnglish = context.watch<LocaleCubit>().state.languageCode == 'en';
+    final showCount = min(itemCount, widget.itemFilms.length); // tránh out of range
+
     return SliverToBoxAdapter(
-      child: widget.itemFilms.isEmpty
-          ? const SizedBox()
-          : Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 10),
-              child: Column(
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => MovieList(
-                                    itemFilms: widget.itemFilms,
-                                    title: widget.title,
-                                    slug: widget.slug,
-                                  )));
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Row(
-                        children: [
-                          Text(
-                            widget.title,
-                            style: const TextStyle(
-                                fontSize: AppSize.size20,
-                                fontWeight: FontWeight.w600),
-                          ),
-                          const Spacer(),
-                          const Text("See more"),
-                          const Icon(Icons.arrow_forward_ios_outlined)
-                        ],
+      child: Padding(
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 10),
+        child: Column(
+          children: [
+            // Header + See more
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => MovieList(
+                      itemFilms: widget.itemFilms,
+                      title: widget.title,
+                      slug: widget.slug,
+                    ),
+                  ),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        widget.title,
+                        style: const TextStyle(
+                          fontSize: AppSize.size20,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
-                    ),
-                  const SizedBox(height: 10.0),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 8.0,
-                      mainAxisSpacing: 8.0,
-                      childAspectRatio: 0.55,
-                    ),
-                    itemCount: itemCount, // Số lượng items trong grid view
-                    itemBuilder: (context, index) {
-                      return GestureDetector(
-                        behavior: HitTestBehavior.translucent,
-                        onTap: () {
-                          movieCubit.addToWatchHistory(
-                              itemFilm: widget.itemFilms[index]);
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => WatchAMovie(
-                                      movieInformation:
-                                          widget.itemFilms[index])));
-                        },
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    Text(app?.seeMore ?? "See more",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onPrimary,
+                        )),
+                    const SizedBox(width: 6),
+                    Icon(Icons.arrow_forward_ios_rounded,
+                        size: 16, color: theme.colorScheme.onPrimary),
+                  ],
+                ),
+              ),
+            ),
 
-                          children: [
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(0),
-                                child: CachedNetworkImage(
-                                  imageUrl: widget.itemFilms[index].poster_url,
-                                  imageBuilder: (context, imageProvider) =>
-                                      Container(
-                                    decoration: BoxDecoration(
-                                      image: DecorationImage(
-                                        image: imageProvider,
-                                        fit: BoxFit.fill,
-                                      ),
-                                    ),
-                                  ),
-                                  errorWidget: (context, url, error) =>
-                                      const Icon(Icons.warning),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(
-                              height: 5,
-                            ),
-                            Container(
-                              height: 40,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 4.0),
-                              child: Text(
-                                context
-                                            .watch<LocaleCubit>()
-                                            .state
-                                            .languageCode ==
-                                        'en'
-                                    ? widget.itemFilms[index].origin_name
-                                    : widget.itemFilms[index].name,
-                                textAlign: TextAlign.start,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 12),
-                                maxLines: 2,
-                              ),
-                            )
-                          ],
+            const SizedBox(height: 6),
+
+            // Grid
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: showCount,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: 0.58, // hợp với poster 2:3 + 2 dòng tiêu đề
+              ),
+              itemBuilder: (context, index) {
+                final item = widget.itemFilms[index];
+                final title =
+                isEnglish ? (item.origin_name) : (item.name);
+
+                return Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      movieCubit.addToWatchHistory(itemFilm: item);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => WatchAMovie(movieInformation: item),
                         ),
                       );
                     },
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      isDetail = !isDetail;
-
-                      if (isDetail) {
-                        itemCount = 21;
-                      } else {
-                        itemCount = 12;
-                      }
-                      setState(() {});
-                    },
-                    child: Container(
-                      alignment: Alignment.center,
-                      height: 30,
-                      width: MediaQuery.of(context).size.width * 0.8,
+                    child: Ink(
                       decoration: BoxDecoration(
-                          color: theme.colorScheme.onPrimary,
-                          borderRadius: BorderRadius.circular(0)),
-                      child: Text(isDetail ? app!.hideLess : app!.seeMore),
+                        color: theme.colorScheme.surface.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: theme.colorScheme.outline.withOpacity(0.18),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Poster
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(12)),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  CachedNetworkImage(
+                                    imageUrl: item.poster_url,
+                                    fit: BoxFit.cover,
+                                    placeholder: (ctx, url) =>
+                                        Shimmer.fromColors(
+                                          baseColor: Colors.grey.shade300,
+                                          highlightColor: Colors.grey.shade100,
+                                          child: Container(color: Colors.grey),
+                                        ),
+                                    errorWidget: (ctx, url, error) => Center(
+                                      child: Icon(
+                                        Icons.image_not_supported_outlined,
+                                        color: theme.colorScheme.tertiary,
+                                      ),
+                                    ),
+                                  ),
+                                  // Overlay giúp text rõ nếu cần
+                                  Positioned.fill(
+                                    child: IgnorePointer(
+                                      child: DecoratedBox(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Colors.transparent,
+                                              Colors.black.withOpacity(0.35),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // Title
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(6, 6, 6, 8),
+                            child: Text(
+                              title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                height: 1.2,
+                                fontWeight: FontWeight.w700,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  )
-                ],
+                  ),
+                );
+              },
+            ),
+
+            const SizedBox(height: 16),
+
+            // Xem thêm / Thu gọn
+            GestureDetector(
+              onTap: () {
+                isDetail = !isDetail;
+                itemCount = isDetail ? 21 : 12; // giữ như logic cũ
+                setState(() {});
+              },
+              child: Container(
+                alignment: Alignment.center,
+                height: 36,
+                width: MediaQuery.of(context).size.width * 0.8,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.onPrimary,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  isDetail ? (app?.hideLess ?? "Hide") : (app?.seeMore ?? "See more"),
+                  style: TextStyle(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
             ),
+
+            const SizedBox(height: 14),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -185,6 +244,7 @@ class ItemGridAndTitleShimmer extends StatefulWidget {
     super.key,
     required this.title,
   });
+
   final String title;
 
   @override
@@ -198,109 +258,123 @@ class _ItemGridAndTitleShimmerState extends State<ItemGridAndTitleShimmer> {
 
   @override
   Widget build(BuildContext context) {
-    final MovieCubit movieCubit = context.read<MovieCubit>();
     final theme = Theme.of(context);
     final app = AppLocalizations.of(context);
 
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 10),
         child: Column(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  widget.title,
-                  style: const TextStyle(
-                      fontSize: AppSize.size20, fontWeight: FontWeight.w600),
-                ),
-                SvgPicture.asset(
-                  'assets/icons/chevron-right.svg',
-                  color: theme.colorScheme.tertiary,
-                )
-              ],
+            // Header
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.title,
+                      style: const TextStyle(
+                        fontSize: AppSize.size20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  SvgPicture.asset(
+                    'assets/icons/chevron-right.svg',
+                    color: theme.colorScheme.tertiary,
+                    width: 16,
+                    height: 16,
+                  )
+                ],
+              ),
             ),
-            const SizedBox(height: 10.0),
+
+            const SizedBox(height: 6),
+
+            // Grid shimmer
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
+              itemCount: itemCount,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
-                crossAxisSpacing: 10.0,
-                mainAxisSpacing: 10.0,
-                childAspectRatio: 0.6,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: 0.58,
               ),
-              itemCount: itemCount, // Số lượng items trong grid view
               itemBuilder: (context, index) {
-                return Column(
-                  children: [
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Shimmer.fromColors(
-                          baseColor: Colors.grey.shade300,
-                          highlightColor: Colors.grey.shade100,
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              color: Colors.grey,
-                            ),
+                return Shimmer.fromColors(
+                  baseColor: Colors.grey.shade300,
+                  highlightColor: Colors.grey.shade100,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.colorScheme.outline.withOpacity(0.18),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(12)),
+                            child: Container(color: Colors.grey),
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    Container(
-                      height: 40,
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Column(
-                        children: [
-                          Shimmer.fromColors(
-                            baseColor: Colors.grey.shade400,
-                            highlightColor: Colors.grey.shade100,
-                            child: Container(
-                              height: 10,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                color: Colors.grey,
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(6, 6, 6, 8),
+                          child: Column(
+                            children: [
+                              Container(
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(6),
+                                  color: Colors.grey,
+                                ),
                               ),
-                            ),
-                          ),
-                          const SizedBox(
-                            height: 8,
-                          ),
-                          Shimmer.fromColors(
-                            baseColor: Colors.grey.shade400,
-                            highlightColor: Colors.grey.shade100,
-                            child: Container(
-                              height: 10,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                color: Colors.grey,
+                              const SizedBox(height: 8),
+                              Container(
+                                height: 10,
+                                width: 90,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(6),
+                                  color: Colors.grey,
+                                ),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
+                        )
+                      ],
                     ),
-                  ],
+                  ),
                 );
               },
             ),
-            const SizedBox(
-              height: 20,
-            ),
-            Container(
+
+            const SizedBox(height: 16),
+
+            // Nút xem thêm (shimmer không cần toggle)
+            Container
+              (
               alignment: Alignment.center,
-              height: 30,
+              height: 36,
               width: MediaQuery.of(context).size.width * 0.8,
               decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(8)),
-              child: Text(isDetail ? app!.hideLess : app!.seeMore),
-            )
+                color: theme.colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                isDetail ? (app?.hideLess ?? "Hide") : (app?.seeMore ?? "See more"),
+                style: TextStyle(
+                  color: theme.colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
           ],
         ),
       ),

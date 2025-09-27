@@ -1,23 +1,16 @@
-import 'dart:io';
-import 'dart:isolate';
-import 'dart:ui';
-
 import 'package:app/component/loading_widget.dart';
 import 'package:app/config/app_size.dart';
-import 'package:app/config/print_color.dart';
 import 'package:app/feature/home/models/data_film.dart';
 import 'package:app/feature/home/models/movie_category.dart';
 import 'package:app/feature/home/models/movie_episodes.dart';
 import 'package:app/feature/home/models/movie_information.dart';
+import 'package:app/feature/home/widgets/video_player_controll.dart';
 import 'package:app/l10n/cubit/locale_cubit.dart';
-import 'package:flick_video_player/flick_video_player.dart';
+import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/painting.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../../component/loading_circle.dart';
 import '../../../l10n/app_localizations.dart';
 import '../cubit/movie/movie_cubit.dart';
 import '../cubit/movie/movie_state.dart';
@@ -25,11 +18,12 @@ import '../movie_list.dart';
 
 // ignore: must_be_immutable
 class VideoPlayerWidget extends StatefulWidget {
-  VideoPlayerWidget(
-      {super.key,
-      required this.url,
-      required this.dataFilm,
-      required this.movieInformation});
+  VideoPlayerWidget({
+    super.key,
+    required this.url,
+    required this.dataFilm,
+    required this.movieInformation,
+  });
 
   final String url;
   final DataFilm? dataFilm;
@@ -40,293 +34,389 @@ class VideoPlayerWidget extends StatefulWidget {
 }
 
 class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
-  late FlickManager flickManager;
+  // --- Chewie + video_player ---
+  late VideoPlayerController _videoController;
+  ChewieController? _chewieController;
+  bool _playerReady = false;
+
+  // --- Nội dung mô tả rút gọn ---
   bool isHidden = false;
   bool isCheckHidden = true;
-  List<String> items = [];
-  List<String> beginningOfContent = [];
-  String summaryContent = '';
-  var isInit = false;
-
-  void splitContent() {
-    // làm chức năng chia nhỏ content để hiện 1 phần
-    setState(() {
-      items = widget.dataFilm!.movie.content.split(' ');
-      if (items.length >= 50) {
-        isCheckHidden = false;
-        isHidden = true;
-        for (var i = 0; i < 35; i++) {
-          beginningOfContent.add(items[i]);
-        }
-        summaryContent = beginningOfContent.join(' ');
-        summaryContent = '$summaryContent ...';
-        printYellow(summaryContent);
-      }
-    });
-  }
+  List<String> _items = [];
+  String _summaryContent = '';
 
   @override
   void initState() {
     super.initState();
-    splitContent();
-
-    flickManager = FlickManager(
-      autoPlay: true,
-      autoInitialize: true,
-      videoPlayerController: VideoPlayerController.networkUrl(
-        Uri.parse(widget.url),
-      ),
-    );
+    _splitContentOnce();
+    _initChewie(widget.url);
   }
 
-  Future<bool> _checkPermission() async {
-    var status = await Permission.storage.status;
-    if (!status.isGranted) {
-      status = await Permission.storage.request();
+  Future<void> _initChewie(String url) async {
+    _videoController = VideoPlayerController.networkUrl(Uri.parse(url));
+    await _videoController.initialize();
+
+    _chewieController = ChewieController(
+      videoPlayerController: _videoController,
+      autoInitialize: true,
+      autoPlay: true,
+      looping: false,
+      aspectRatio: 16 / 9,
+      allowFullScreen: true,
+      allowMuting: true,
+      showControls: true,
+      materialProgressColors: ChewieProgressColors(
+        playedColor: Theme.of(context).colorScheme.onPrimary,
+        handleColor: Theme.of(context).colorScheme.onPrimary,
+        backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.18),
+        bufferedColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.25),
+      ),
+    );
+
+    setState(() {
+      _playerReady = true;
+    });
+  }
+
+  Future<void> _playNewUrl(String url) async {
+    final newController = VideoPlayerController.networkUrl(Uri.parse(url));
+    await newController.initialize();
+
+    // Dispose cũ
+    _chewieController?.dispose();
+    _videoController.dispose();
+
+    // Assign mới
+    _videoController = newController;
+    _chewieController = ChewieController(
+      videoPlayerController: _videoController,
+      autoInitialize: true,
+      autoPlay: true,
+      looping: false,
+      aspectRatio: 16 / 9,
+      allowFullScreen: true,
+      allowMuting: true,
+      showControls: true,
+      materialProgressColors: ChewieProgressColors(
+        playedColor: Theme.of(context).colorScheme.onPrimary,
+        handleColor: Theme.of(context).colorScheme.onPrimary,
+        backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.18),
+        bufferedColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.25),
+      ),
+    );
+
+    setState(() {});
+  }
+
+  void _splitContentOnce() {
+    final content = widget.dataFilm?.movie.content ?? '';
+    _items = content.split(' ');
+    if (_items.length >= 50) {
+      isCheckHidden = false;
+      isHidden = true;
+      _summaryContent = _items.take(35).join(' ') + ' ...';
     }
-    return status.isGranted;
   }
 
   @override
   void dispose() {
-    flickManager.dispose();
+    _chewieController?.dispose();
+    _videoController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final LocaleCubit localeCubit = context.watch<LocaleCubit>();
-    final double height = MediaQuery.of(context).size.height;
+    final localeCubit = context.watch<LocaleCubit>();
     final theme = Theme.of(context);
-    final MovieCubit movieCubit = context.read<MovieCubit>();
+    final movieCubit = context.read<MovieCubit>();
     final app = AppLocalizations.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        VideoPlayer(height: height, flickManager: flickManager),
+        _VideoPlayerSurface(
+          chewieController: _chewieController,
+        ),
+
+        // Info + meta
         Expanded(
           child: Container(
             color: theme.colorScheme.primary,
-            padding: const EdgeInsets.only(left: 10, right: 10, top: 0),
-            child: SingleChildScrollView(
+            child: CustomScrollView(
               physics: const BouncingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Divider(),
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          localeCubit.state.languageCode == 'vi'
-                              ? widget.dataFilm!.movie.name
-                              : widget.dataFilm!.movie.origin_name,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          if (widget.movieInformation!.isFavorite == false) {
-                            movieCubit.addMoviesToFavoritesList(
-                                itemFilm: widget.movieInformation);
-                          } else {
-                            movieCubit.removeMoviesToFavoritesList(
-                                itemFilm: widget.movieInformation);
-                          }
-                          setState(() {
-                            widget.movieInformation!.isFavorite =
-                                !widget.movieInformation!.isFavorite;
-                          });
-                        },
-                        child: Icon(
-                          Icons.favorite_rounded,
-                          size: AppSize.size28,
-                          color: widget.movieInformation!.isFavorite
-                              ? theme.colorScheme.onPrimary
-                              : theme.colorScheme.tertiary,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                    ],
-                  ),
-                  const Divider(),
-                  const SizedBox(
-                    height: 6,
-                  ),
-                  widget.dataFilm!.episodes[0].server_data.length == 1
-                      ? const SizedBox()
-                      : EpisodeNumberOfTheMovie(
-                          flickManager: flickManager,
-                          items: widget.dataFilm!.episodes,
-                        ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  TitleAndContent(
-                      title: AppLocalizations.of(context)!.content,
-                      content: isHidden
-                          ? summaryContent
-                          : widget.dataFilm!.movie.content),
-                  const SizedBox(
-                    height: 5,
-                  ),
-                  isCheckHidden
-                      ? const SizedBox()
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Divider(color: theme.colorScheme.outline.withOpacity(0.2), height: 12),
+
+                        // Title + favorite
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center, // 👈 căn giữa theo chiều dọc
                           children: [
-                            GestureDetector(
+                            Expanded(
+                              child: Text(
+                                localeCubit.state.languageCode == 'vi'
+                                    ? widget.dataFilm!.movie.name
+                                    : widget.dataFilm!.movie.origin_name,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  height: 1.2,
+                                  fontWeight: FontWeight.w800,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            InkWell(
+                              borderRadius: BorderRadius.circular(999),
                               onTap: () {
+                                if (widget.movieInformation!.isFavorite == false) {
+                                  movieCubit.addMoviesToFavoritesList(itemFilm: widget.movieInformation);
+                                } else {
+                                  movieCubit.removeMoviesToFavoritesList(itemFilm: widget.movieInformation);
+                                }
                                 setState(() {
-                                  isHidden = !isHidden;
+                                  widget.movieInformation!.isFavorite = !widget.movieInformation!.isFavorite;
                                 });
                               },
                               child: Container(
-                                alignment: Alignment.center,
-                                width: MediaQuery.of(context).size.width * 0.25,
-                                height: 20,
+                                padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                    color: Colors.grey,
-                                    borderRadius: BorderRadius.circular(0)),
-                                child: Text(
-                                  isHidden ? app!.seeMore : app!.hideLess,
-                                  style: TextStyle(
-                                      color: theme.colorScheme.primary,
-                                      fontSize: AppSize.size11),
+                                  color: widget.movieInformation!.isFavorite
+                                      ? theme.colorScheme.onPrimary.withOpacity(0.16)
+                                      : theme.colorScheme.surface.withOpacity(0.5),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: theme.colorScheme.outline.withOpacity(0.25),
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.favorite_rounded,
+                                  size: AppSize.size24,
+                                  color: widget.movieInformation!.isFavorite
+                                      ? theme.colorScheme.onPrimary
+                                      : theme.colorScheme.tertiary,
                                 ),
                               ),
-                            )
+                            ),
                           ],
                         ),
-                  const SizedBox(
-                    height: 10,
+
+                        Divider(color: theme.colorScheme.outline.withOpacity(0.2), height: 16),
+
+                        // Episodes picker (nếu nhiều)
+                        if (widget.dataFilm!.episodes[0].server_data.length > 1)
+                          _EpisodeNumberOfTheMovie(
+                            items: widget.dataFilm!.episodes,
+                            onSelect: (link) => _playNewUrl(link),
+                          ),
+
+                        const SizedBox(height: 8),
+
+                        // Content
+                        _TitleAndContentCard(
+                          title: app!.content,
+                          content: isHidden ? _summaryContent : (widget.dataFilm!.movie.content),
+                          trailing: isCheckHidden
+                              ? null
+                              : TextButton(
+                            onPressed: () => setState(() => isHidden = !isHidden),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              minimumSize: const Size(0, 0),
+                            ),
+                            child: Text(
+                              isHidden ? (app.seeMore) : (app.hideLess),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: theme.colorScheme.onPrimary,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        // Actors
+                        _ContentActor(items: widget.dataFilm?.movie.actor ?? []),
+
+                        const SizedBox(height: 10),
+
+                        // Categories
+                        _ContentCategory(items: widget.dataFilm!.movie.category),
+
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   ),
-                  ContentActor(items: widget.dataFilm?.movie.actor ?? []),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  ContentCategory(items: widget.dataFilm!.movie.category),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        )
+        ),
       ],
     );
   }
 }
 
-class VideoPlayer extends StatelessWidget {
-  const VideoPlayer({
-    super.key,
-    required this.height,
-    required this.flickManager,
+class _VideoPlayerSurface extends StatelessWidget {
+  const _VideoPlayerSurface({
+    required this.chewieController,
   });
 
-  final double height;
-  final FlickManager flickManager;
+  final ChewieController? chewieController;
+
+  double _resolveAspect() {
+    // Ưu tiên AR của Chewie, rồi tới AR của video, cuối cùng 16:9
+    final cc = chewieController;
+    if (cc == null) return 16 / 9;
+
+    final arChewie = cc.aspectRatio;
+    if (arChewie != null && arChewie > 0) return arChewie;
+
+    final vc = cc.videoPlayerController;
+    final v = vc.value;
+    if (v.isInitialized && v.aspectRatio > 0) return v.aspectRatio;
+
+    return 16 / 9;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return OrientationBuilder(builder: (context, orientation) {
-      return FlickVideoPlayer(
-        wakelockEnabled: true,
-        flickManager: flickManager,
-        flickVideoWithControls: FlickVideoWithControls(
-          aspectRatioWhenLoading: 16 / 9,
-          videoFit: orientation == Orientation.portrait
-              ? BoxFit.fitHeight
-              : BoxFit.fitWidth,
-          controls: FlickPortraitControls(
-            iconSize: 30,
-            progressBarSettings: FlickProgressBarSettings(
-              bufferedColor: Colors.white.withOpacity(0.5),
-              playedColor: Colors.red,
-              height: 4,
-              handleRadius: 9,
-              handleColor: Colors.red,
-            ),
-          ),
-          playerLoadingFallback: const LoadingWidget(),
+    final theme = Theme.of(context);
+    final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+
+    if (chewieController == null) {
+      // Fallback loading
+      return AspectRatio(
+        aspectRatio: 16 / 9,
+        child: ColoredBox(
+          color: theme.colorScheme.surfaceVariant,
+          child: const Center(child: LoadingWidget()),
         ),
       );
-    });
+    }
+
+    final vc = chewieController!.videoPlayerController;
+    final isReady = vc.value.isInitialized;
+
+    // Dọc: luôn cố định 16:9
+    if (isPortrait) {
+      return AspectRatio(
+        aspectRatio: 16 / 9,
+        child: isReady
+            ? Chewie(controller: chewieController!)
+            : ColoredBox(
+          color: theme.colorScheme.surfaceVariant,
+          child: const Center(child: LoadingWidget()),
+        ),
+      );
+    }
+
+    // Ngang: như hiện tại (dựa theo aspect thực tế)
+    final ar = _resolveAspect();
+    return AspectRatio(
+      aspectRatio: ar,
+      child: isReady
+          ? Chewie(controller: chewieController!)
+          : ColoredBox(
+        color: theme.colorScheme.surfaceVariant,
+        child: const Center(child: LoadingWidget()),
+      ),
+    );
   }
 }
 
-class EpisodeNumberOfTheMovie extends StatefulWidget {
-  const EpisodeNumberOfTheMovie(
-      {super.key, required this.items, required this.flickManager});
+
+class _EpisodeNumberOfTheMovie extends StatefulWidget {
+  const _EpisodeNumberOfTheMovie({
+    super.key,
+    required this.items,
+    required this.onSelect,
+  });
 
   final List<MovieEpisodes> items;
-  final FlickManager flickManager;
+  final ValueChanged<String> onSelect; // nhận link m3u8
 
   @override
-  State<EpisodeNumberOfTheMovie> createState() =>
-      _EpisodeNumberOfTheMovieState();
+  State<_EpisodeNumberOfTheMovie> createState() => _EpisodeNumberOfTheMovieState();
 }
 
-class _EpisodeNumberOfTheMovieState extends State<EpisodeNumberOfTheMovie> {
+class _EpisodeNumberOfTheMovieState extends State<_EpisodeNumberOfTheMovie> {
   int indexSelected = 0;
-
-  void playNewVideo(FlickManager flickManager, String url) {
-    setState(() {
-      flickManager
-          .handleChangeVideo(VideoPlayerController.networkUrl(Uri.parse(url)));
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final count = widget.items[0].server_data.length;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           AppLocalizations.of(context)!.episode,
-          style: const TextStyle(
-              fontWeight: FontWeight.w600, fontSize: AppSize.size16),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: AppSize.size16,
+            color: theme.colorScheme.onSurface,
+          ),
         ),
-        const SizedBox(
-          height: 10,
-        ),
+        const SizedBox(height: 10),
         GridView.builder(
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: widget.items[0].server_data.length,
+          itemCount: count,
           shrinkWrap: true,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 10,
-              crossAxisSpacing: 6,
-              childAspectRatio: 0.8,
-              mainAxisSpacing: 6),
-          itemBuilder: (context, index) => GestureDetector(
-            onTap: () {
-              if (indexSelected != index) {
-                setState(() {
-                  indexSelected = index;
-                  print(indexSelected);
-                });
-                playNewVideo(widget.flickManager,
-                    widget.items[0].server_data[index].link_m3u8);
-              }
-            },
-            child: Container(
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(0),
-                color: indexSelected == index ? Colors.red : Colors.grey,
-              ),
-              child: Text(
-                '${index + 1}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
+            crossAxisCount: 8,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: 1.1,
           ),
+          itemBuilder: (context, index) {
+            final isActive = indexSelected == index;
+            return InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () {
+                if (!isActive) {
+                  setState(() => indexSelected = index);
+                  final link = widget.items[0].server_data[index].link_m3u8;
+                  widget.onSelect(link);
+                }
+              },
+              child: Ink(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: isActive
+                      ? Theme.of(context).colorScheme.error
+                      : Theme.of(context).colorScheme.surfaceVariant,
+                  border: Border.all(
+                    color: isActive
+                        ? Theme.of(context).colorScheme.error
+                        : Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    '${index + 1}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: isActive
+                          ? Theme.of(context).colorScheme.error
+                          : Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ],
     );
@@ -334,64 +424,91 @@ class _EpisodeNumberOfTheMovieState extends State<EpisodeNumberOfTheMovie> {
 }
 
 // ignore: camel_case_types
-class ContentActor extends StatelessWidget {
-  const ContentActor({super.key, required this.items});
+class _ContentActor extends StatelessWidget {
+  const _ContentActor({super.key, required this.items});
 
   final List<String> items;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final chips = items.map((name) {
+      return Chip(
+        label: Text(
+          name,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+        backgroundColor: theme.colorScheme.surface.withOpacity(0.6),
+        side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.2)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      );
+    }).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           AppLocalizations.of(context)!.actor,
-          style: const TextStyle(
-              fontWeight: FontWeight.w600, fontSize: AppSize.size16),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: AppSize.size16,
+            color: theme.colorScheme.onSurface,
+          ),
         ),
-        const SizedBox(
-          height: 10,
-        ),
+        const SizedBox(height: 8),
         Wrap(
-            spacing: 8.0, // Khoảng cách giữa các widget con
-            runSpacing: 0.1, // Khoảng cách giữa các dòng
-            children: List.generate(
-                items.length, (index) => Chip(label: Text(items[index]))))
+          spacing: 8,
+          runSpacing: 8,
+          children: chips,
+        ),
       ],
     );
   }
 }
 
 // ignore: camel_case_types
-class ContentCategory extends StatelessWidget {
-  const ContentCategory({super.key, required this.items});
+class _ContentCategory extends StatelessWidget {
+  const _ContentCategory({super.key, required this.items});
 
   final List<MovieCategory> items;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           AppLocalizations.of(context)!.category,
-          style: const TextStyle(
-              fontWeight: FontWeight.w600, fontSize: AppSize.size16),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: AppSize.size16,
+            color: theme.colorScheme.onSurface,
+          ),
         ),
-        const SizedBox(
-          height: 10,
-        ),
+        const SizedBox(height: 8),
         Wrap(
-          spacing: 8.0,
-          runSpacing: 8.0,
+          spacing: 8,
+          runSpacing: 8,
           children: List.generate(
             items.length,
-            (index) => InputChip(
-              backgroundColor: Colors.blue,
+                (index) => InputChip(
+              backgroundColor: theme.colorScheme.surface.withOpacity(0.7),
+              side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.25)),
+              labelPadding: const EdgeInsets.symmetric(horizontal: 8),
               label: Text(
                 items[index].name,
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
+              selectedColor: theme.colorScheme.onPrimary.withOpacity(0.15),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -400,53 +517,69 @@ class ContentCategory extends StatelessWidget {
                       var movieCubit = context.read<MovieCubit>();
                       movieCubit.getTheListOfCategory(items[index].slug, 0);
                       return BlocBuilder<MovieCubit, MovieState>(
-                          builder: (context, state) {
-                        return MovieList(
-                          itemFilms: state.categoryMovies,
-                          title: 'Thể loại ${items[index].name}',
-                          slug: 'the-loai',
-                          category: items[index].slug,
-                        );
-                      });
+                        builder: (context, state) {
+                          return MovieList(
+                            itemFilms: state.categoryMovies,
+                            title: 'Thể loại ${items[index].name}',
+                            slug: 'the-loai',
+                            category: items[index].slug,
+                          );
+                        },
+                      );
                     },
                   ),
                 );
               },
             ),
           ),
-        )
+        ),
       ],
     );
   }
 }
 
-class TitleAndContent extends StatelessWidget {
-  const TitleAndContent({super.key, this.title = '', this.content = ''});
+class _TitleAndContentCard extends StatelessWidget {
+  const _TitleAndContentCard({super.key, this.title = '', this.content = '', this.trailing});
 
   final String title;
   final String content;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: MediaQuery.of(context).size.width - 20,
+    final theme = Theme.of(context);
+    return Container(
+      width: MediaQuery.of(context).size.width - 24,
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-                fontWeight: FontWeight.w600, fontSize: AppSize.size16),
+          // Title + (Xem thêm)
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: AppSize.size16,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              if (trailing != null) trailing!,
+            ],
           ),
-          const SizedBox(
-            height: 6,
-          ),
+          const SizedBox(height: 6),
           Text(
-            textAlign: TextAlign.justify,
             content,
-          ),
-          const SizedBox(
-            height: 6,
+            textAlign: TextAlign.justify,
+            style: TextStyle(color: theme.colorScheme.onSurface, height: 1.35),
           ),
         ],
       ),
@@ -454,24 +587,7 @@ class TitleAndContent extends StatelessWidget {
   }
 }
 
-double handleWidthCategory(List items, BuildContext context) {
-  double width = 0;
-  if (items.length == 1) {
-    width = MediaQuery.of(context).size.width - 20;
-  } else if (items.length == 2) {
-    width = (MediaQuery.of(context).size.width - 20) * 0.45;
-  } else {
-    width = (MediaQuery.of(context).size.width - 20) * 0.3;
-  }
-  return width;
-}
-
-double handleWidthActor(List items, BuildContext context) {
-  double width = 0;
-  if (items.length == 1) {
-    width = MediaQuery.of(context).size.width - 0.95;
-  } else {
-    width = (MediaQuery.of(context).size.width - 20) * 0.45;
-  }
-  return width;
-}
+/* --- helpers cũ nếu cần giữ lại ---
+double handleWidthCategory(List items, BuildContext context) { ... }
+double handleWidthActor(List items, BuildContext context) { ... }
+*/

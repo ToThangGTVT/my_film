@@ -2,44 +2,53 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 ThemeData dark = ThemeData(
-    useMaterial3: false,
-    fontFamily: GoogleFonts.nunitoSans().fontFamily,
-    colorScheme: const ColorScheme(
-      brightness: Brightness.dark,
-      // 4 màu chủ đạo
-      primary: Color.fromARGB(255, 0, 0, 0),
-      onPrimary: Color.fromARGB(255, 221, 17, 17),
-      primaryContainer: Color(0xFF6196A6),
-      onPrimaryContainer: Color(0xFF1B4242),
-      secondary: Color(0xFFE493B3),
-      onSecondary: Color(0xFF5C8374),
-      secondaryContainer: Color(0xFFEEA5A6),
-      onSecondaryContainer: Color(0xFF9EC8B9),
-      // -------------------------------
+      useMaterial3: true,
+      fontFamily: GoogleFonts.beVietnamPro().fontFamily,
+      colorScheme: const ColorScheme(
+            brightness: Brightness.dark,
 
-      // các màu dark
-      tertiary: Color(0xFFFFFFFF),
+            // NỀN ĐEN + CHỮ TRẮNG
+            primary: Color(0xFF0B0B0F),          // nền chính (scaffold/background)
+            onPrimary: Color(0xFFFFFFFF),        // chữ/icon trên nền chính
+            primaryContainer: Color(0xFF15161C), // khối/section trên nền
+            onPrimaryContainer: Color(0xFFECECF1),
 
-      onTertiary: Color(0xFF492532),
-      tertiaryContainer: Color(0xFF96B6C5),
-      onTertiaryContainer: Color(0xFFFFD8E4),
-      error: Color(0xFFFF0000),
-      onError: Color(0xFF601410),
-      errorContainer: Color(0xFF8C1D18),
-      onErrorContainer: Color(0xFFF9DEDC),
-      background: Color(0xFF1C1B1F),
-      onBackground: Color(0xFFE6E1E5),
-      surface: Color(0xFF496989),
-      onSurface: Color(0xFFE6E1E5),
-      surfaceVariant: Color(0xFF49454F),
-      onSurfaceVariant: Color(0xFFCAC4D0),
-      outline: Color(0xFF938F99),
-      outlineVariant: Color(0xFF49454F),
-      shadow: Color(0xFF000000),
-      scrim: Color(0xFF000000),
-      inverseSurface: Color(0xFFE6E1E5),
-      onInverseSurface: Color.fromARGB(255, 29, 29, 29),
-      inversePrimary: Color(0xFF6750A4),
-      // The surfaceTint color is set to the same color as the primary.
-      surfaceTint: Color(0xFFD0BCFF),
-    ));
+            // ACCENT XANH LAM (điểm nhấn)
+            secondary: Color(0xFF376AED),
+            onSecondary: Color(0xFFFFFFFF),
+            secondaryContainer: Color(0xFF213258),
+            onSecondaryContainer: Color(0xFFDCE6FF),
+
+            // XÁM TRUNG TÍNH (dùng cho text/icon phụ)
+            tertiary: Color(0xFF9AA4AF),
+            onTertiary: Color(0xFF0F1115),
+            tertiaryContainer: Color(0xFF20242B),
+            onTertiaryContainer: Color(0xFFE2E6EC),
+
+            // ERROR
+            error: Color(0xFFEF5350),
+            onError: Color(0xFFFFFFFF),
+            errorContainer: Color(0xFF8C1D18),
+            onErrorContainer: Color(0xFFF9DEDC),
+
+            // NỀN & BỀ MẶT
+            background: Color(0xFF0B0B0F),
+            onBackground: Color(0xFFE6E6EA),
+            surface: Color(0xFF111317),          // card/container
+            onSurface: Color(0xFFE6E1E5),
+            surfaceVariant: Color(0xFF1A1D23),   // card phụ/khung
+            onSurfaceVariant: Color(0xFFB0B6C0),
+
+            // VIỀN / DIVIDER
+            outline: Color(0xFF3C414B),
+            outlineVariant: Color(0xFF252A32),
+
+            // MISC
+            shadow: Color(0xFF000000),
+            scrim: Color(0xFF000000),
+            inverseSurface: Color(0xFFE6E1E5),
+            onInverseSurface: Color(0xFF111317),
+            inversePrimary: Color(0xFF89A6FF),
+            surfaceTint: Color(0xFF376AED), // dùng accent làm tint
+      ),
+);

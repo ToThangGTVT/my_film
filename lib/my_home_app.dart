@@ -2,8 +2,6 @@ import 'package:app/feature/favorite/favorite_movie_page.dart';
 import 'package:app/feature/home/home_page.dart';
 import 'package:app/feature/setting/setting_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-
 import 'l10n/app_localizations.dart';
 
 class MyHomeApp extends StatefulWidget {
@@ -15,31 +13,49 @@ class MyHomeApp extends StatefulWidget {
 
 class _MyHomeAppState extends State<MyHomeApp> {
   int pageIndex = 0;
-  List<Widget> pages = [
-    const HomePage(),
-    // const SearchPage(),
-    const FavoriteMoviePage(),
-    const SettingsPage()
+  final List<Widget> pages = const [
+    HomePage(),
+    FavoriteMoviePage(),
+    SettingsPage(),
   ];
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final app = AppLocalizations.of(context);
+
     // ignore: deprecated_member_use
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
-        body: pages[pageIndex],
+        body: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          switchInCurve: Curves.easeOut,
+          switchOutCurve: Curves.easeIn,
+          child: KeyedSubtree(
+            key: ValueKey<int>(pageIndex),
+            child: pages[pageIndex],
+          ),
+        ),
         bottomNavigationBar: BottomNavigationBar(
           backgroundColor: theme.colorScheme.primary,
           type: BottomNavigationBarType.fixed,
           currentIndex: pageIndex,
-          unselectedIconTheme: IconThemeData(color: theme.colorScheme.tertiary),
           showUnselectedLabels: true,
           showSelectedLabels: true,
-          unselectedItemColor: theme.colorScheme.tertiary,
           selectedItemColor: theme.colorScheme.onPrimary,
+          unselectedItemColor: theme.colorScheme.tertiary,
+          selectedIconTheme: const IconThemeData(size: 26),
+          unselectedIconTheme: const IconThemeData(size: 24),
+          selectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            letterSpacing: 0.1,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 11.5,
+          ),
           onTap: (value) {
             setState(() {
               pageIndex = value;
@@ -48,18 +64,18 @@ class _MyHomeAppState extends State<MyHomeApp> {
           items: [
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined, color: theme.colorScheme.tertiary),
-              label: app?.home,
               activeIcon: Icon(Icons.home_rounded, color: theme.colorScheme.onPrimary),
+              label: app?.home,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.favorite_border, color: theme.colorScheme.tertiary),
-              label: app?.favorite,
               activeIcon: Icon(Icons.favorite_rounded, color: theme.colorScheme.onPrimary),
+              label: app?.favorite,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.settings_outlined, color: theme.colorScheme.tertiary),
+              activeIcon: Icon(Icons.settings, color: theme.colorScheme.onPrimary),
               label: app?.setting,
-              activeIcon: Icon(Icons.settings_outlined, color: theme.colorScheme.onPrimary),
             ),
           ],
         ),

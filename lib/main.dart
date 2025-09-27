@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import 'bloc_observer/my_bloc_observer.dart';
 import 'feature/home/cubit/home_page/home_page_cubit.dart';
 import 'feature/home/cubit/movie/movie_cubit.dart';
 import 'l10n/app_localizations.dart';
@@ -15,17 +16,11 @@ import 'l10n/app_localizations.dart';
 String language = 'vi';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // await Firebase.initializeApp();
-  // await FirebaseApi().initNotifications();
   await Hive.initFlutter('dev_box');
   await LocalStorage.hiveRegisterAdapter();
   await LocalStorage.hiveOpenBox();
 
-  // SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-  //   systemNavigationBarColor: them, // navigation bar color
-  //   statusBarColor: Colors.transparent, // status bar color
-  // ));
-  // Bloc.observer = MyBlocObserver();
+  Bloc.observer = MyBlocObserver();
   runApp(
     MultiBlocProvider(
       providers: [
@@ -63,7 +58,6 @@ class _MyAppState extends State<MyApp> {
     localeCubit = context.read<LocaleCubit>();
     themeCubitRead.initTheme();
     localeCubit.initLanguage();
-    // TODO: implement initState
     super.initState();
   }
 
